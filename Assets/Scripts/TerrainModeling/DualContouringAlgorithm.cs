@@ -13,11 +13,11 @@ public class DualContouringAlgorithm : Algorithm
     float3 start;
     //Vector3 chunkCenter;
 
-    public DualContouringAlgorithm(TerrainInfo t, int a, int l) : base(t, a, l)
+    public DualContouringAlgorithm(TerrainInfo t, int a, int l, int cp) : base(t, a, l, cp)
     {
         vertexList = new List<Vector3>();
         pointsSquare = new Dictionary<int3, int>();
-        cell = new DualCell(TerrainManagerData.dir[axisID], 0, terrain);
+        cell = new DualCell(axisID, 0, terrain);
     }
 
     #region Voxel Data generation
@@ -29,24 +29,21 @@ public class DualContouringAlgorithm : Algorithm
         interpVertex = new List<HermiteData>();
         vertexList = new List<Vector3>();
         pointsSquare = new Dictionary<int3, int>();
-        //float3 start = new float3(center.x - terrain.chunkSize / 2f, center.y - terrain.chunkSize / 2f, center.z - terrain.chunkSize / 2f);
-         start = center;
-        //chunkCenter = start;
+        start = center;
         float3 temp;
-        //float d = (terrain.planetRadius / (terrain.maxChunkPerFace / 2)) / terrain.chunkDetail; // Modificar
         float d = (terrain.maxResolution * terrain.reescaleValues[terrain.levelsOfDetail - 1 - level]) / terrain.chunkDetail;
         for (int3 t = int3.zero; t.x < terrain.chunkDetail; t.x++)
         {
             for (t.z = 0; t.z < terrain.chunkDetail; t.z++)
             {
                 temp = start + (t.x * d * TerrainManagerData.dir[axisID].c0) + ((terrain.chunkDetail - 1) * TerrainManagerData.dir[axisID].c2 * d) + (t.z * d * TerrainManagerData.dir[axisID].c1);
-                cell.SetValues(t, temp, d, terrain.noiseOffset, terrain.noiseYScale);
+                cell.SetFirstValues(t, temp, d, terrain.noiseOffset);
                 if (cell.index == 255)
                     continue;
                 for (t.y = 0; t.y < terrain.chunkDetail; t.y++)
                 {
                     temp = start + (t.x * d * TerrainManagerData.dir[axisID].c0) + (t.y * d * TerrainManagerData.dir[axisID].c2) + (t.z * d * TerrainManagerData.dir[axisID].c1);
-                    cell.SetValues(t, temp, d, terrain.noiseOffset, terrain.noiseYScale);
+                    cell.SetValues(t, temp, d, terrain.noiseOffset);
                     if (cell.index == 0)
                         break;
                     SetIntersection();
@@ -119,7 +116,6 @@ public class DualContouringAlgorithm : Algorithm
         p = p * (Mathf.Abs(v1) / t);
         return p1 + p;
     }
-
 
     Vector3 CalculateNewPoint(ref List<HermiteData> dataList)
     {
@@ -207,266 +203,74 @@ public class DualContouringAlgorithm : Algorithm
     #endregion
 
     #region Mesh Generation
-
-    public override Mesh GenerateMesh(float3 center)
+    public override Mesh GenerateMesh(float3 center, Node[] neighbors)
     {
         List<int> triangles = new List<int>();
-        float v = terrain.chunkDetail;
-        int3 index = int3.zero;
-        if (TerrainManagerData.dir[axisID].c2[0] != 0)
-        {
-            index.y = 0;
-            if (TerrainManagerData.dir[axisID].c0[1] != 0)
-            {
-                index.x = 1;
-                index.z = 2;
-            }
-            else
-            {
-                index.x = 2;
-                index.z = 1;
-            }
-        }
-        else if (TerrainManagerData.dir[axisID].c2.y != 0)
-        {
-            index.y = 1;
-            if (TerrainManagerData.dir[axisID].c0[0] != 0)
-            {
-                index.x = 0;
-                index.z = 2;
-            }
-            else
-            {
-                index.x = 2;
-                index.z = 0;
-            }
-        }
-        else
-        {
-            index.y = 2;
-            if (TerrainManagerData.dir[axisID].c0[0] != 0)
-            {
-                index.x = 0;
-                index.z = 1;
-            }
-            else
-            {
-                index.x = 1;
-                index.z = 0;
-            }
-        }
-
         bool c;
-
-        int2 axisIndex, dir, cubeIndex;
 
         List<int3x2> keyList = new List<int3x2>();
         foreach (int3x2 key in edges.Keys)
             keyList.Insert(0, key);
-
         foreach (int3x2 key in keyList)
         {
             CubeEdge cubeEdge = edges[key];
             if (cubeEdge.cubes.Count < 4)
             {
-                axisIndex = int2.zero;
-                dir = int2.zero;
-                cubeIndex = int2.zero;
-                int i = 0;      // axisA
-                int3 temp1 = key.c0, temp2 = key.c1;
-
-                bool[] face = { Mathf.Abs(temp1[index.x]) == v && Mathf.Abs(temp2[index.x]) == v,
-                                Mathf.Abs(temp1[index.z]) == v && Mathf.Abs(temp2[index.z]) == v,
-                                Mathf.Abs(temp1[index.y]) == v && Mathf.Abs(temp2[index.y]) == v,
-                                temp1[index.x] == 0 && temp2[index.x] == 0,
-                                temp1[index.z] == 0 && temp2[index.z] == 0,
-                                temp1[index.y] == 0 && temp2[index.y] == 0
-                };
-
-                if (face[0] || face[3])
-                {
-                    axisIndex.x = 0;
-                    if (face[0])
-                    {
-                        dir.x = 1;
-                        cubeIndex.x = 0;
-                    }
-                    else
-                    {
-                        dir.x = -1;
-                        cubeIndex.x = 3;
-                    }
-
-                    if (face[1] || face[4])
-                    {
-                        axisIndex.y = 1;
-                        if (face[1])
-                        {
-                            dir.y = 1;
-                            cubeIndex.y = 1;
-                        }
-                        else
-                        {
-                            dir.y = -1;
-                            cubeIndex.y = 4;
-                        }
-                    }
-                    else if (face[2] || face[5])
-                    {
-                        axisIndex.y = 2;
-                        if (face[2])
-                        {
-                            dir.y = 1;
-                            cubeIndex.y = 2;
-                        }
-                        else
-                        {
-                            dir.y = -1;
-                            cubeIndex.y = 5;
-                        }
-                    }
-                }
-                else if (face[1] || face[4])
-                {
-                    axisIndex.x = 1;
-                    if (face[1])
-                    {
-                        dir.x = 1;
-                        cubeIndex.x = 1;
-                    }
-                    else
-                    {
-                        dir.x = -1;
-                        cubeIndex.x = 4;
-                    }
-                    if (face[2] || face[5])
-                    {
-                        axisIndex.y = 2;
-                        if (face[2])
-                        {
-                            dir.y = 1;
-                            cubeIndex.y = 2;
-                        }
-                        else
-                        {
-                            dir.y = -1;
-                            cubeIndex.y = 5;
-                        }
-                    }
-                }
-                else
-                {
-                    axisIndex.x = 2;
-                    if (face[2])
-                    {
-                        dir.x = 1;
-                        cubeIndex.x = 2;
-                    }
-                    else
-                    {
-                        dir.x = -1;
-                        cubeIndex.x = 5;
-                    }
-                }
-
-                if (axisIndex.x == 0)
-                {
-                    if (axisIndex.y == 1)
-                    {
-                        if (dir.x == 1)
-                        {
-                            if (dir.y == 1)
-                                i = 6;
-                            else
-                                i = 8;
-                        }
-                        else
-                        {
-                            if (dir.y == 1)
-                                i = 7;
-                            else
-                                i = 9;
-                        }
-                    }
-                    else if (axisIndex.y == 2)
-                    {
-                        if (dir.x == 1)
-                        {
-                            if (dir.y == 1)
-                                i = 10;
-                            else
-                                i = 12;
-                        }
-                        else
-                        {
-                            if (dir.y == 1)
-                                i = 11;
-                            else
-                                i = 13;
-                        }
-                    }
-                    else
-                    {
-                        if (dir.x == 1)
-                            i = 0;
-                        else
-                            i = 3;
-                    }
-
-                }
-                else if (axisIndex.x == 1)
-                {
-                    if (axisIndex.y == 2)
-                    {
-                        if (dir.x == 1)
-                        {
-                            if (dir.y == 1)
-                                i = 14;
-                            else
-                                i = 16;
-                        }
-                        else
-                        {
-                            if (dir.y == 1)
-                                i = 15;
-                            else
-                                i = 17;
-                        }
-                    }
-                    else
-                    {
-                        if (dir.x == 1)
-                            i = 1;
-                        else
-                            i = 4;
-                    }
-                }
-                else if (axisIndex.x == 2)
-                {
-                    if (dir.x == 1)
-                        i = 2;
-                    else
-                        i = 5;
-                }
-
-                //c = !AddCubes(i, axisIndex, dir, cubeIndex, key, ref dcList, cubeEdge);
-
-                //if (c)
+                c = !AddCubes(DualContouringData.otherEdgeData[GetNeighbourIndex(key)], key, ref neighbors, cubeEdge);
+                if (c)
                     continue;
             }
-
             if (SetPointsList(cubeEdge, key, ref triangles))
-            {
                 edges[key] = new CubeEdge(edges[key]);
-            }
         }
-
         Mesh m = new Mesh();
-        m.vertices = vertexList.ToArray();
-        m.vertices = SquareToCircle(vertexList, center).ToArray();
+        if(terrain.drawAsSphere)
+            m.vertices = SquareToCircle(vertexList, center).ToArray();
+        else
+            m.vertices = vertexList.ToArray();
         m.triangles = triangles.ToArray();
         m.RecalculateNormals();
         return m;
+    }
+
+    int GetNeighbourIndex(int3x2 key)
+    {
+        int3 index = TerrainManagerData.axisIndex[axisID];
+        bool[] face = { Mathf.Abs(key.c0[index.x]) == terrain.chunkDetail && Mathf.Abs(key.c1[index.x]) == terrain.chunkDetail,     // 0
+                        Mathf.Abs(key.c0[index.y]) == terrain.chunkDetail && Mathf.Abs(key.c1[index.y]) == terrain.chunkDetail,     // 1
+                        Mathf.Abs(key.c0[index.z]) == terrain.chunkDetail && Mathf.Abs(key.c1[index.z]) == terrain.chunkDetail,     // 2
+                        key.c0[index.x] == 0 && key.c1[index.x] == 0,                                                               // 3
+                        key.c0[index.y] == 0 && key.c1[index.y] == 0,                                                               // 4
+                        key.c0[index.z] == 0 && key.c1[index.z] == 0                                                                // 5
+        };
+
+        if (face[0]){
+            if (face[1])        return 6;
+            else if (face[4])   return 8;
+            else if (face[2])   return 10;
+            else if (face[5])   return 12;
+            else                return 0;
+        }
+        else if (face[3]){
+            if (face[1])        return 7;
+            else if (face[4])   return 9;
+            else if (face[2])   return 11;
+            else if (face[5])   return 13;
+            else                return 3;
+        }
+        else if (face[1]){
+            if (face[2])        return 14;
+            else if (face[5])   return 16;
+            else                return 1;
+        }
+        else if (face[4]){
+            if (face[2])        return 15;
+            else if (face[5])   return 17;
+            else                return 4;
+        }
+        else if (face[2])       return 2;
+        else if (face[5])       return 5;
+        return -1;
     }
 
     List<Vector3> SquareToCircle(List<Vector3> p, float3 c)
@@ -498,7 +302,6 @@ public class DualContouringAlgorithm : Algorithm
 
         int3 v1 = e.c1 - e.c0;
         int3 v2 = int3.zero;
-        HermiteData h = interpVertex[c.hermiteIndex];
         if (v1.x != 0)
         {
             v2.y = 1;
@@ -528,16 +331,16 @@ public class DualContouringAlgorithm : Algorithm
             float3 temp = f - t;
             if (v2.x == 0)
             {
-                if (Mathf.Sign(v2.z) == Mathf.Sign(temp.z))
+                if (IsSignEqual(v2.z, temp.z))
                 {
-                    if (Mathf.Sign(v2.y) == Mathf.Sign(temp.y))
+                    if (IsSignEqual(v2.y, temp.y))
                         points[0] = pointsSquare[f];
                     else
                         points[1] = pointsSquare[f];
                 }
                 else
                 {
-                    if (Mathf.Sign(v2.y) == Mathf.Sign(temp.y))
+                    if (IsSignEqual(v2.y, temp.y))
                         points[3] = pointsSquare[f];
                     else
                         points[2] = pointsSquare[f];
@@ -545,16 +348,16 @@ public class DualContouringAlgorithm : Algorithm
             }
             else if (v2.y == 0)
             {
-                if (Mathf.Sign(v2.x) == Mathf.Sign(temp.x))
+                if (IsSignEqual(v2.x, temp.x))
                 {
-                    if (Mathf.Sign(v2.z) == Mathf.Sign(temp.z))
+                    if (IsSignEqual(v2.z, temp.z))
                         points[0] = pointsSquare[f];
                     else
                         points[1] = pointsSquare[f];
                 }
                 else
                 {
-                    if (Mathf.Sign(v2.z) == Mathf.Sign(temp.z))
+                    if (IsSignEqual(v2.z, temp.z))
                         points[3] = pointsSquare[f];
                     else
                         points[2] = pointsSquare[f];
@@ -563,16 +366,16 @@ public class DualContouringAlgorithm : Algorithm
             }
             else
             {
-                if (Mathf.Sign(v2.x) == Mathf.Sign(temp.x))
+                if (IsSignEqual(v2.x, temp.x))
                 {
-                    if (Mathf.Sign(v2.y) == Mathf.Sign(temp.y))
+                    if (IsSignEqual(v2.y, temp.y))
                         points[0] = pointsSquare[f];
                     else
                         points[1] = pointsSquare[f];
                 }
                 else
                 {
-                    if (Mathf.Sign(v2.y) == Mathf.Sign(temp.y))
+                    if(IsSignEqual(v2.y, temp.y))
                         points[3] = pointsSquare[f];
                     else
                         points[2] = pointsSquare[f];
@@ -589,37 +392,44 @@ public class DualContouringAlgorithm : Algorithm
         return true;
     }
 
-    /*
-    bool AddCubes(int p, int2 index, int2 dir, int2 cubeindex, int3x2 thisEdge, ref DualChunk[] dcList, CubeEdge ce)
+    bool IsSignEqual(float v1, float v2)
     {
+        return Mathf.Sign(v1) == Mathf.Sign(v2);
+    }
+
+    bool AddCubes(GetOtherEdgeData data, int3x2 thisEdge, ref Node[] neighbors, CubeEdge ce)
+    {
+        int2 index = data.index;
+        int2 dir = data.dir;
+        int3 cubeindex = data.cubesIndex;
         int3x2 otherEdge = thisEdge;
-        int3x3 a = (int3x3)axis;
+        int3x3 a = (int3x3)TerrainManagerData.dir[axisID];
         int3 dif;
         List<int3> cubes = new List<int3>();
         List<float3> cPoints = new List<float3>();
 
         if (p < 6)
         {
-            if (!dcList[cubeindex.x])
+            if (neighbors[cubeindex.x] == null)
                 return false;
             dif = a[index.x] * dir.x;
             otherEdge[0] = thisEdge[0] - (terrain.chunkDetail * dif);
             otherEdge[1] = thisEdge[1] - (terrain.chunkDetail * dif);
-            dcList[cubeindex.x].getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif);
+            neighbors[cubeindex.x].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level);
         }
         else
         {
-            if (!dcList[cubeindex.x] || !dcList[cubeindex.y] || !dcList[p] || index.x == index.y)
+            if (neighbors[cubeindex.x] == null || neighbors[cubeindex.y] == null || neighbors[cubeindex.z] == null || index.x == index.y)
                 return false;
             dif = a[index.x] * dir.x;
             otherEdge[0] = thisEdge[0] - (terrain.chunkDetail * dif);
             otherEdge[1] = thisEdge[1] - (terrain.chunkDetail * dif);
-            dcList[cubeindex.x].getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif);
+            neighbors[cubeindex.y].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level);
 
             dif = a[index.y] * dir.y;
             otherEdge[0] = thisEdge[0] - (terrain.chunkDetail * dif);
             otherEdge[1] = thisEdge[1] - (terrain.chunkDetail * dif);
-            dcList[cubeindex.y].getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif);
+            neighbors[cubeindex.z].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level);
 
             dif = (a[index.y] * dir.y) + (a[index.x] * dir.x);
             otherEdge[0] = (terrain.chunkDetail * a[index.x] * dir.x) + (terrain.chunkDetail * a[index.y] * dir.y);
@@ -627,9 +437,9 @@ public class DualContouringAlgorithm : Algorithm
 
             otherEdge[1] = (terrain.chunkDetail * a[index.x] * dir.x) + (terrain.chunkDetail * a[index.y] * dir.y);
             otherEdge[1] = thisEdge[1] - otherEdge[1];
-            dcList[p].getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif);
+            neighbors[cubeindex.x].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level);
         }
-        if (ce.cubes.Count + cubes.Count < 4)
+        if (ce.cubes.Count + cubes.Count != 4)
             return false;
         for (int i = 0; i < cubes.Count; i++)
         {
@@ -642,7 +452,29 @@ public class DualContouringAlgorithm : Algorithm
         }
         return true;
     }
-    */
+
+    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD)
+    {
+        if (edges == null) return;
+        if (level < otherLOD)
+        {
+            return;
+        }
+        int3 t = dif * (terrain.chunkDetail);
+        float d = (terrain.maxResolution * terrain.reescaleValues[terrain.levelsOfDetail - 1 - level]) / terrain.chunkDetail;
+        d *= terrain.chunkDetail;
+        Vector3 temp = new Vector3(dif.x * d, dif.y * d, dif.z * d);
+        if (edges.ContainsKey(v))
+        {
+            //if (edges[v].passed)
+            //    return;
+            for (int i = 0; i < edges[v].cubes.Count; i++)
+            {
+                c.Add(edges[v].cubes[i] + t);
+                p.Add(vertexList[pointsSquare[edges[v].cubes[i]]] + temp);
+            }
+        }
+    }
     #endregion
 
 }
@@ -658,7 +490,6 @@ public struct HermiteData
     public Vector3 position;
     public Vector3 normal;
 }
-
 
 public struct CubeEdge
 {
@@ -695,5 +526,41 @@ public struct CubeEdge
     }
 }
 
+public static class DualContouringData
+{
+    public static readonly GetOtherEdgeData[] otherEdgeData = {
+        new GetOtherEdgeData(new int2(0, 0), new int2(1, 0),    new int3(0, 0, 0)),
+        new GetOtherEdgeData(new int2(1, 0), new int2(1, 0),    new int3(1, 0, 0)),
+        new GetOtherEdgeData(new int2(2, 0), new int2(1, 0),    new int3(2, 0, 0)),
+        new GetOtherEdgeData(new int2(0, 0), new int2(-1, 0),   new int3(3, 0, 0)),
+        new GetOtherEdgeData(new int2(1, 0), new int2(-1, 0),   new int3(4, 0, 0)),
+        new GetOtherEdgeData(new int2(2, 0), new int2(-1, 0),   new int3(5, 0, 0)),
+        new GetOtherEdgeData(new int2(0, 1), new int2(1, 1),    new int3(6, 0, 1)),
+        new GetOtherEdgeData(new int2(0, 1), new int2(-1, 1),   new int3(7, 3, 1)),
+        new GetOtherEdgeData(new int2(0, 1), new int2(1, -1),   new int3(8, 0, 4)),
+        new GetOtherEdgeData(new int2(0, 1), new int2(-1, -1),  new int3(9, 3, 4)),
+        new GetOtherEdgeData(new int2(0, 2), new int2(1, 1),    new int3(10, 0, 2)),
+        new GetOtherEdgeData(new int2(0, 2), new int2(-1, 1),   new int3(11, 3, 2)),
+        new GetOtherEdgeData(new int2(0, 2), new int2(1, -1),   new int3(12, 0, 5)),
+        new GetOtherEdgeData(new int2(0, 2), new int2(-1, -1),  new int3(13, 3, 5)),
+        new GetOtherEdgeData(new int2(1, 2), new int2(1, 1),    new int3(14, 1, 2)),
+        new GetOtherEdgeData(new int2(1, 2), new int2(-1, 1),   new int3(15, 4, 2)),
+        new GetOtherEdgeData(new int2(1, 2), new int2(1, -1),   new int3(16, 1, 5)),
+        new GetOtherEdgeData(new int2(1, 2), new int2(-1, -1),  new int3(17, 4, 5)),
+    };
+}
 
+public class GetOtherEdgeData
+{
+    public int2 index;
+    public int2 dir;
+    public int3 cubesIndex;
+
+    public GetOtherEdgeData(int2 id, int2 d, int3 c)
+    {
+        index = id;
+        dir = d;
+        c = cubesIndex;
+    }
+}
 

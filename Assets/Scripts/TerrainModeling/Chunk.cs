@@ -29,11 +29,26 @@ public class Chunk : MonoBehaviour
 
     public void SetMesh()
     {
-        //gameObject.transform.localPosition = data.cubePosition;
-        gameObject.transform.localPosition = Vector3.zero;
+        if(data.data.terrain.drawAsSphere)
+            gameObject.transform.localPosition = Vector3.zero;
+        else
+            gameObject.transform.localPosition = data.cubePosition;
         Mesh m = data.GenerateMesh();
         meshFilter.sharedMesh = m;
+        if (data.data.terrain.removeLevelChange)
+        {
+            if (data.IsDivision())
+                gameObject.SetActive(false);
+        }
         //meshCollider.sharedMesh = m;
     }
 
+    //private void OnDrawGizmos()
+    //{
+    //    Gizmos.color = Color.red;
+    //    if(data.data.terrain.drawAsSphere)
+    //        Gizmos.DrawSphere(data.sphereCenter, .01f);
+    //    else
+    //        Gizmos.DrawSphere(data.center, .01f);
+    //}
 }

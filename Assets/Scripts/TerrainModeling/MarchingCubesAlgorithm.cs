@@ -9,18 +9,17 @@ public class MarchingCubesAlgorithm : Algorithm
     MarchingCell cell;
     Dictionary<int3x2, int> vertexDictionary;
 
-    public MarchingCubesAlgorithm(TerrainInfo t, int a, int l) : base(t, a, l)
+    public MarchingCubesAlgorithm(TerrainInfo t, int a, int l, int cp) : base(t, a, l, cp)
     {
         vertexList = new List<Vector3>();
         triangles = new List<int>();
         vertexDictionary = new Dictionary<int3x2, int>();
-        cell = new MarchingCell(TerrainManagerData.dir[axisID], level, terrain);
+        cell = new MarchingCell(axisID, level, terrain);
     }
 
     public override bool GenerateVoxelData(float3 center)
     {
         float d = (terrain.maxResolution * terrain.reescaleValues[terrain.levelsOfDetail - 1 - level]) / terrain.chunkDetail;
-        //float d = ((terrain.planetRadius * 2) / terrain.minChunkPerFace) / terrain.chunkDetail; // Modificar
         float3 start = center;
         float3 temp;
         for (int3 t = int3.zero; t.x < terrain.chunkDetail; t.x++)
@@ -28,7 +27,7 @@ public class MarchingCubesAlgorithm : Algorithm
             for (t.z = 0; t.z < terrain.chunkDetail; t.z++)
             {
                 temp = start + (t.x * d * TerrainManagerData.dir[axisID].c0) + ((terrain.chunkDetail - 1) * TerrainManagerData.dir[axisID].c2 * d) + (t.z * d * TerrainManagerData.dir[axisID].c1);
-                cell.SetValues(t, temp, d, terrain.noiseOffset);
+                cell.SetFirstValues(t, temp, d, terrain.noiseOffset);
                 if (cell.index == 255)
                     continue;
                 for (t.y = 0; t.y < terrain.chunkDetail; t.y++)
@@ -44,17 +43,27 @@ public class MarchingCubesAlgorithm : Algorithm
         return triangles.Count > 0;
     }
 
-    public override Mesh GenerateMesh(float3 center)
+    public override Mesh GenerateMesh(float3 center, Node[] neighbors)
     {
         if (terrain.chunkDetail <= 0) return null;
-        return GenerateBasicTerrain(center);
+        if (terrain.drawAsSphere)
+            return GenerateSphereTerrain(center);
+        return GenerateCubeTerrain(center);
     }
 
-    Mesh GenerateBasicTerrain(float3 center)
+    Mesh GenerateSphereTerrain(float3 center)
     {
         Mesh m = new Mesh();
         m.vertices = SquareToCircle(center).ToArray();
-        //m.vertices = vertexList.ToArray();
+        m.triangles = triangles.ToArray();
+        m.RecalculateNormals();
+        return m;
+    }
+
+    Mesh GenerateCubeTerrain(float3 center)
+    {
+        Mesh m = new Mesh();
+        m.vertices = vertexList.ToArray();
         m.triangles = triangles.ToArray();
         m.RecalculateNormals();
         return m;
@@ -134,6 +143,11 @@ public class MarchingCubesAlgorithm : Algorithm
         float t = Mathf.Abs(v1) + Mathf.Abs(v2);
         p = p * (Mathf.Abs(v1) / t);
         return p1 + p;
+    }
+    
+    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD)
+    {
+
     }
 
 }

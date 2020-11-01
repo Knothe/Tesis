@@ -17,6 +17,8 @@ public class TerrainInfo
     public bool isMarchingCube;
     public List<NoiseSettings> settings;
     public Transform player;
+    public bool drawAsSphere;
+    public bool removeLevelChange;
 
     public int levelsOfDetail { get; private set; }
     public List<int> reescaleValues { get; private set; }
@@ -116,6 +118,11 @@ public class TerrainInfo
     public void SetTerrainManager(TerrainManager t)
     {
         terrainManager = t;
+    }
+
+    public Node GetNode(int faceID, int myLevel, int3 myPos, int3 wantedPos)
+    {
+        return terrainManager.GetNode(faceID, myLevel, myPos, wantedPos);
     }
 
 }
