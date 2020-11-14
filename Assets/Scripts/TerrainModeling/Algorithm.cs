@@ -10,6 +10,7 @@ public class Algorithm
     protected int axisID;
     protected int level;
     protected int childPos;
+    public bool voxelDataGenerated { get; protected set; }
 
     public Algorithm(TerrainInfo t, int a, int l, int cp)
     {
@@ -17,6 +18,7 @@ public class Algorithm
         terrain = t;
         level = l;
         childPos = cp;
+        voxelDataGenerated = false;
     }
 
     public virtual bool GenerateVoxelData(float3 center)
@@ -29,7 +31,7 @@ public class Algorithm
         return null;
     }
 
-    public virtual void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD)
+    public virtual void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD, int otherAxisID)
     {
         
     }

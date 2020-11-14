@@ -25,7 +25,10 @@ public class TerrainInfo
     public float3x3[] resolutionVectors { get; private set; }
     public float maxResolution { get; private set; }
     public float3[] faceStart { get; private set; }
+    float lodChange;
+    public Vector3 playerRelativePosition { get; private set; }
 
+    float[] lodDistances;
 
     Noise noise = new Noise(0);
     TerrainManager terrainManager;
@@ -63,12 +66,16 @@ public class TerrainInfo
         }
 
         int rTemp = 1;
+        lodDistances = new float[levelsOfDetail];
         for (int i = 0; i < levelsOfDetail; i++)
         {
             reescaleValues.Add(rTemp);
             rTemp *= 2;
+            lodDistances[i] = planetRadius / (i + 1);
         }
+        lodDistances[levelsOfDetail - 1] = 0;
         decimalNoise = new Dictionary<double, int>();
+        lodChange = planetRadius / (levelsOfDetail - 1);
     }
 
     int GetDetailCount()
@@ -85,6 +92,13 @@ public class TerrainInfo
             return count;
         else
             return -1;
+    }
+
+    public float GetLoDDistance(int level)
+    {
+        if (level < 0)
+            return float.MaxValue;
+        return lodDistances[level];
     }
 
     public bool CheckChunks()
@@ -112,12 +126,18 @@ public class TerrainInfo
 
     public Vector3 GetPlayerRelativePosition()
     {
-        return player.transform.position - terrainManager.transform.position;
+        return playerRelativePosition;
     }
 
     public void SetTerrainManager(TerrainManager t)
     {
         terrainManager = t;
+        playerRelativePosition = player.transform.position - terrainManager.transform.position;
+    }
+
+    public void Update()
+    {
+        playerRelativePosition = player.transform.position - terrainManager.transform.position;
     }
 
     public Node GetNode(int faceID, int myLevel, int3 myPos, int3 wantedPos)

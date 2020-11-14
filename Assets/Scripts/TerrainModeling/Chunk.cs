@@ -11,8 +11,8 @@ public class Chunk : MonoBehaviour
 
     MeshFilter meshFilter;
     MeshCollider meshCollider;
-
-    Node data;
+    public int chunkListIndex { get; set; }
+    public Node data { get; private set; }
 
     public void Initialize(Node d, Material m)
     {
@@ -20,6 +20,9 @@ public class Chunk : MonoBehaviour
         meshFilter = gameObject.GetComponent<MeshFilter>();
         meshCollider = gameObject.GetComponent<MeshCollider>();
         gameObject.GetComponent<MeshRenderer>().material = m;
+        gameObject.SetActive(true);
+        gameObject.GetComponent<MeshRenderer>().material.color = Color.white;
+        //chunkListIndex = index;
     }
 
     public bool UpdateChunkData()
@@ -27,28 +30,19 @@ public class Chunk : MonoBehaviour
         return data.GenerateVoxelData();
     }
 
-    public void SetMesh()
+    public void SetMesh(Mesh m)
     {
-        if(data.data.terrain.drawAsSphere)
+        if (data.data.terrain.drawAsSphere)
             gameObject.transform.localPosition = Vector3.zero;
         else
             gameObject.transform.localPosition = data.cubePosition;
-        Mesh m = data.GenerateMesh();
+        spherePosition = data.faceLocation;
         meshFilter.sharedMesh = m;
-        if (data.data.terrain.removeLevelChange)
-        {
-            if (data.IsDivision())
-                gameObject.SetActive(false);
-        }
-        //meshCollider.sharedMesh = m;
     }
 
-    //private void OnDrawGizmos()
-    //{
-    //    Gizmos.color = Color.red;
-    //    if(data.data.terrain.drawAsSphere)
-    //        Gizmos.DrawSphere(data.sphereCenter, .01f);
-    //    else
-    //        Gizmos.DrawSphere(data.center, .01f);
-    //}
+    public void IsLimit()
+    {
+        gameObject.GetComponent<MeshRenderer>().material.color = Color.red;
+    }
+
 }

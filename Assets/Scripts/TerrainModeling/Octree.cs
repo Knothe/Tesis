@@ -5,22 +5,27 @@ public class Node
 {
     public Algorithm data;
     public int level {  get; private set; }
-    int axisID;
+    public int axisID { get; private set; }
 
     public float3 cubePosition { get; private set; }
     public float3 spherePosition { get; private set; }
     public float3 center { get; private set; }
     public float3 sphereCenter { get; private set; }
+    public Vector3 sphereChunkDirection { get; private set; }
 
-    Node parentNode;
-    Node[] neighbors;
+    public Node parentNode { get; private set; }
+    public Node[] neighbors { get; private set; }
 
     public Node[] childs { get; private set; }
     public int3 faceLocation { get; private set; }
-    public bool isActive { get; private set; }
+    public bool isActive { get; set; }
+    public Chunk inGameChunk { get; set; }
+    public bool isVisible { get; private set; }
+
 
     public Node(Node p, int l, int axis, int3 pos, float3 middlePos,TerrainInfo t, int cp)
     {
+        inGameChunk = null;
         childs = null;
         parentNode = p;
         level = l;
@@ -46,6 +51,7 @@ public class Node
         float height = (temp.x * up.x) + (temp.y * up.y) + (temp.z * up.z);
         temp = (temp * ax) + (up * data.terrain.planetRadius);
         temp = temp.normalized * height;
+        sphereChunkDirection = temp.normalized;
         return temp;
     }
 
@@ -66,41 +72,55 @@ public class Node
     public bool GenerateVoxelData()
     {
         isActive = true;
+        //if (IsVisible())
+        //    return false;
         return data.GenerateVoxelData(cubePosition);
     }
 
-    public Mesh GenerateMesh()
+    public bool IsVisible()
     {
-        //isActive = true;
+        Vector3 dif = data.terrain.playerRelativePosition.normalized - sphereChunkDirection;
+        isVisible = dif.magnitude < 1.414f;
+        return isVisible; // sqrt(2)
+    }
+
+    public void GenerateMesh2() // Cambiar nombre
+    {
         int reescale = data.terrain.reescaleValues[(data.terrain.levelsOfDetail - 1) - level];
         for (int i = 0; i < neighbors.Length; i++)
             neighbors[i] = data.terrain.GetNode(axisID, level, faceLocation, faceLocation + (TerrainManagerData.neigborCells[i] * reescale));
-        return data.GenerateMesh(cubePosition, neighbors);
+        if (inGameChunk != null)
+            inGameChunk.SetMesh(data.GenerateMesh(cubePosition, neighbors));
     }
 
-    public bool IsDivision()
+    public int IsDivision()
     {
         foreach(Node n in neighbors)
         {
             if (n != null)
+            {
                 if (n.level != level || n.childs != null)
-                    return true;
+                    return 1;   // Divide niveles de detalle
+                else if (!n.IsVisible())
+                    return 2;   // Divide prendido y apagado
+            }
+                
         }
             
-        return false;
+        return 0; // No es división
     }
 
     public bool CheckAvailability()
     {
         float dist = (data.terrain.GetPlayerRelativePosition() - (Vector3)sphereCenter).magnitude;
-        if(level == 0)
-            return dist > 2;
-        else
-            return true;
+        return dist >= data.terrain.GetLoDDistance(level);
     }
 
     public void GenerateChilds()
     {
+        isActive = false;
+        if (childs != null)
+            return;
         childs = new Node[8];
         int newLevel = level + 1;
         //int3 t = TerrainManagerData.dirMult[axisID];
@@ -117,6 +137,15 @@ public class Node
         childs[7] = new Node(this, newLevel, axisID, faceLocation + (new int3(1, 1, 1) * reescale), middlePoint, data.terrain, 7);
     }
 
+    public void SetChunk(Chunk c)
+    {
+        inGameChunk = c;
+    }
 
+    public int4 GetIDValue()
+    {
+        //return new int4((int3)cubePosition, axisID);
+        return new int4(faceLocation, axisID);
+    }
 
 }

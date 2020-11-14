@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
+using UnityEngine.UIElements;
+using UnityEngine.Animations;
 
 public class DualContouringAlgorithm : Algorithm
 {
@@ -25,6 +27,8 @@ public class DualContouringAlgorithm : Algorithm
     {
         if (terrain.chunkDetail <= 0)
             return false;
+        if(voxelDataGenerated)
+            return interpVertex.Count > 0;
         edges = new Dictionary<int3x2, CubeEdge>();
         interpVertex = new List<HermiteData>();
         vertexList = new List<Vector3>();
@@ -50,6 +54,7 @@ public class DualContouringAlgorithm : Algorithm
                 }
             }
         }
+        voxelDataGenerated = true;
         return interpVertex.Count > 0;
     }
     
@@ -408,14 +413,14 @@ public class DualContouringAlgorithm : Algorithm
         List<int3> cubes = new List<int3>();
         List<float3> cPoints = new List<float3>();
 
-        if (p < 6)
+        if (cubeindex.x < 6)
         {
             if (neighbors[cubeindex.x] == null)
                 return false;
             dif = a[index.x] * dir.x;
             otherEdge[0] = thisEdge[0] - (terrain.chunkDetail * dif);
             otherEdge[1] = thisEdge[1] - (terrain.chunkDetail * dif);
-            neighbors[cubeindex.x].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level);
+            neighbors[cubeindex.x].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID);
         }
         else
         {
@@ -424,12 +429,12 @@ public class DualContouringAlgorithm : Algorithm
             dif = a[index.x] * dir.x;
             otherEdge[0] = thisEdge[0] - (terrain.chunkDetail * dif);
             otherEdge[1] = thisEdge[1] - (terrain.chunkDetail * dif);
-            neighbors[cubeindex.y].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level);
+            neighbors[cubeindex.y].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID);
 
             dif = a[index.y] * dir.y;
             otherEdge[0] = thisEdge[0] - (terrain.chunkDetail * dif);
             otherEdge[1] = thisEdge[1] - (terrain.chunkDetail * dif);
-            neighbors[cubeindex.z].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level);
+            neighbors[cubeindex.z].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID);
 
             dif = (a[index.y] * dir.y) + (a[index.x] * dir.x);
             otherEdge[0] = (terrain.chunkDetail * a[index.x] * dir.x) + (terrain.chunkDetail * a[index.y] * dir.y);
@@ -437,7 +442,7 @@ public class DualContouringAlgorithm : Algorithm
 
             otherEdge[1] = (terrain.chunkDetail * a[index.x] * dir.x) + (terrain.chunkDetail * a[index.y] * dir.y);
             otherEdge[1] = thisEdge[1] - otherEdge[1];
-            neighbors[cubeindex.x].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level);
+            neighbors[cubeindex.x].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID);
         }
         if (ce.cubes.Count + cubes.Count != 4)
             return false;
@@ -453,16 +458,15 @@ public class DualContouringAlgorithm : Algorithm
         return true;
     }
 
-    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD)
+    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD, int otherAxisID)
     {
         if (edges == null) return;
         if (level < otherLOD)
-        {
             return;
-        }
+        if (otherAxisID != axisID)
+            RotateValues(ref v, ref dif, otherAxisID);
         int3 t = dif * (terrain.chunkDetail);
-        float d = (terrain.maxResolution * terrain.reescaleValues[terrain.levelsOfDetail - 1 - level]) / terrain.chunkDetail;
-        d *= terrain.chunkDetail;
+        float d = (terrain.maxResolution * terrain.reescaleValues[terrain.levelsOfDetail - 1 - level]);
         Vector3 temp = new Vector3(dif.x * d, dif.y * d, dif.z * d);
         if (edges.ContainsKey(v))
         {
@@ -475,6 +479,48 @@ public class DualContouringAlgorithm : Algorithm
             }
         }
     }
+
+    float3 ChangeAxis(float3 v, int otherAxis)
+    {
+        float3 temp = float3.zero;
+
+        int3 axisIndex = TerrainManagerData.axisIndex[otherAxis];
+
+        return temp;
+    }
+
+    void RotateValues(ref int3x2 v, ref int3 dif, int otherAxisID)
+    {
+        int3x2 temp = new int3x2(0, 0, 0, 0, 0, 0);
+        int3 axisIndex = TerrainManagerData.axisIndex[otherAxisID];
+        temp.c0.x = Mathf.Abs(v.c0[axisIndex.x]);
+        temp.c0.y = Mathf.Abs(v.c0[axisIndex.y]);
+        temp.c0.z = Mathf.Abs(v.c0[axisIndex.z]);
+
+        temp.c1.x = Mathf.Abs(v.c1[axisIndex.x]);
+        temp.c1.y = Mathf.Abs(v.c1[axisIndex.y]);
+        temp.c1.z = Mathf.Abs(v.c1[axisIndex.z]);
+
+        int3 tempDif = new int3(0, 0, 0);
+        tempDif.x = Mathf.Abs(dif[axisIndex.x]) * (int)(Mathf.Sign(TerrainManagerData.dirMult[otherAxisID][axisIndex.x]) * Mathf.Sign(dif[axisIndex.x]));
+        tempDif.y = Mathf.Abs(dif[axisIndex.y]) * (int)(Mathf.Sign(TerrainManagerData.dirMult[otherAxisID][axisIndex.y]) * Mathf.Sign(dif[axisIndex.y]));
+        tempDif.z = Mathf.Abs(dif[axisIndex.z]) * (int)(Mathf.Sign(TerrainManagerData.dirMult[otherAxisID][axisIndex.z]) * Mathf.Sign(dif[axisIndex.z]));
+
+        axisIndex = TerrainManagerData.axisIndex[axisID];
+        v.c0[axisIndex.x] = temp.c0.x * TerrainManagerData.dirMult[axisID][axisIndex.x];
+        v.c0[axisIndex.y] = temp.c0.y * TerrainManagerData.dirMult[axisID][axisIndex.y];
+        v.c0[axisIndex.z] = temp.c0.z * TerrainManagerData.dirMult[axisID][axisIndex.z];
+
+        v.c1[axisIndex.x] = temp.c1.x * TerrainManagerData.dirMult[axisID][axisIndex.x];
+        v.c1[axisIndex.y] = temp.c1.y * TerrainManagerData.dirMult[axisID][axisIndex.y];
+        v.c1[axisIndex.z] = temp.c1.z * TerrainManagerData.dirMult[axisID][axisIndex.z];
+
+        dif[axisIndex.x] = tempDif.x * TerrainManagerData.dirMult[axisID][axisIndex.x];
+        dif[axisIndex.y] = tempDif.y * TerrainManagerData.dirMult[axisID][axisIndex.y];
+        dif[axisIndex.z] = tempDif.z * TerrainManagerData.dirMult[axisID][axisIndex.z];
+
+    }
+
     #endregion
 
 }
@@ -560,7 +606,7 @@ public class GetOtherEdgeData
     {
         index = id;
         dir = d;
-        c = cubesIndex;
+        cubesIndex = c;
     }
 }
 

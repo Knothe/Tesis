@@ -19,6 +19,8 @@ public class MarchingCubesAlgorithm : Algorithm
 
     public override bool GenerateVoxelData(float3 center)
     {
+        if(voxelDataGenerated)
+            return triangles.Count > 0;
         float d = (terrain.maxResolution * terrain.reescaleValues[terrain.levelsOfDetail - 1 - level]) / terrain.chunkDetail;
         float3 start = center;
         float3 temp;
@@ -40,6 +42,7 @@ public class MarchingCubesAlgorithm : Algorithm
                 }
             }
         }
+        voxelDataGenerated = true;
         return triangles.Count > 0;
     }
 
@@ -145,7 +148,7 @@ public class MarchingCubesAlgorithm : Algorithm
         return p1 + p;
     }
     
-    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD)
+    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD, int otherAxisID)
     {
 
     }
