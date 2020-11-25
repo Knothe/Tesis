@@ -242,10 +242,11 @@ public class TerrainManager : MonoBehaviour
         planetData.SetTerrainManager(this);
         updateVisibilityNodes = new Dictionary<int4, Node>();
         detailLimitNode = new Dictionary<int4, Node>();
+        int heightChunks = planetData.GetChunkHeight();
         for(int i = 0; i < 6; i++)
         {
             faces[i] = new Face(i, planetData, gameObject.transform);
-            faces[i].GenerateChunks(defaultMaterial);
+            faces[i].GenerateChunks(defaultMaterial, heightChunks);
         }
 
         for (int i = 0; i < 6; i++)
@@ -270,89 +271,8 @@ public class TerrainManager : MonoBehaviour
 
     public Node GetNode(int faceID, int myLevel, int3 myPos, int3 wantedPos)
     {
-        int checkFaceID = faceID;
-        if(wantedPos.x < 0)
-        {
-            wantedPos.x += planetData.maxChunkPerFace;
-            checkFaceID = 1;
-        } 
-        else if(wantedPos.x >= planetData.maxChunkPerFace)
-        {
-            wantedPos.x -= planetData.maxChunkPerFace;
-            checkFaceID = 0;
-        }
-        else if (wantedPos.y < 0)
-        {
-            wantedPos.y += planetData.maxChunkPerFace;
-            checkFaceID = 3;
-        }
-        else if (wantedPos.y >= planetData.maxChunkPerFace)
-        {
-            wantedPos.y -= planetData.maxChunkPerFace;
-            checkFaceID = 2;
-        }
-        else
-            return faces[checkFaceID].GetNode(myLevel, myPos, wantedPos);
-
-        return faces[TerrainManagerData.neighborFace[faceID][checkFaceID]].GetNode(myLevel, myPos, RotatePoint(CheckRotation(faceID, TerrainManagerData.neighborFace[faceID][checkFaceID]), wantedPos));
-    }
-
-    int CheckRotation(int originFace, int nextFace)
-    {
-        if(originFace == 0)
-        {
-            if (nextFace == 5 || nextFace == 4)
-                return 3;
-        } 
-        else if (originFace == 1)
-        {
-            if (nextFace == 4)
-                return 2;
-        }
-        else if (originFace == 2)
-        {
-            if (nextFace == 5 || nextFace == 4)
-                return 1;
-        }
-        else if (originFace == 3)
-        {
-            if (nextFace == 5)
-                return 2;
-        }
-        else if (originFace == 4)
-        {
-            return nextFace + 1;
-        }
-        else if (originFace == 5)
-        {
-            if (nextFace == 3)
-                return 2;
-            if (nextFace == 2)
-                return 3;
-            if (nextFace == 0)
-                return 1;
-        }
-        return 0;
-    }
-
-    int3 RotatePoint(int rotation, int3 wantedPos)
-    {
-        int3 temp = wantedPos;
-        
-        if(rotation == 1)
-        {
-            temp.x = wantedPos.y;
-            temp.y = planetData.maxChunkPerFace - 1 - wantedPos.x;
-        } else if(rotation == 2)
-        {
-            temp.x = planetData.maxChunkPerFace - 1 - wantedPos.x;
-            temp.y = planetData.maxChunkPerFace - 1 - wantedPos.y;
-        } else if(rotation == 3)
-        {
-            temp.x = planetData.maxChunkPerFace - 1 - wantedPos.y;
-            temp.y = wantedPos.x;
-        }
-        return temp;
+        int3 temp = TerrainManagerData.RotatePoint(faceID, wantedPos.x, wantedPos.y, planetData.maxChunkPerFace);
+        return faces[temp.x].GetNode(myLevel, myPos, new int3(temp.y, temp.z, wantedPos.z));
     }
 }
 
@@ -387,7 +307,7 @@ public static class TerrainManagerData
         new int3(-1, 1, -1),
         new int3(1, 1, -1),
         new int3(1, 1, 1),
-        new int3(1, -1, -1)
+        new int3(-1, 1, -1)
     };
 
     public static readonly int3[] neigborCells =
@@ -429,6 +349,95 @@ public static class TerrainManagerData
         new int4(2, 0, 1, 3)
     };
 
+    public static int3 RotatePoint(int face, int x, int y, int maxQuantity)
+    {
+        int checkFaceID;
 
+        if (x < 0)
+        {
+            x += maxQuantity;
+            checkFaceID = 1;
+        }
+        else if (x >= maxQuantity)
+        {
+            x -= maxQuantity;
+            checkFaceID = 0;
+        }
+        else if (y < 0)
+        {
+            y += maxQuantity;
+            checkFaceID = 3;
+        }
+        else if (y >= maxQuantity)
+        {
+            y -= maxQuantity;
+            checkFaceID = 2;
+        }
+        else
+            return new int3(face, x, y);
+
+        int2 temp = Rotate(CheckRotation(face, neighborFace[face][checkFaceID]), x, y, maxQuantity);
+
+        return new int3(neighborFace[face][checkFaceID], temp.x, temp.y);
+    }
+
+    static int CheckRotation(int originFace, int nextFace)
+    {
+        if (originFace == 0)
+        {
+            if (nextFace == 5 || nextFace == 4)
+                return 3;
+        }
+        else if (originFace == 1)
+        {
+            if (nextFace == 4)
+                return 2;
+        }
+        else if (originFace == 2)
+        {
+            if (nextFace == 5 || nextFace == 4)
+                return 1;
+        }
+        else if (originFace == 3)
+        {
+            if (nextFace == 5)
+                return 2;
+        }
+        else if (originFace == 4)
+        {
+            return nextFace + 1;
+        }
+        else if (originFace == 5)
+        {
+            if (nextFace == 3)
+                return 2;
+            if (nextFace == 2)
+                return 3;
+            if (nextFace == 0)
+                return 1;
+        }
+        return 0;
+    }
+    
+    static int2 Rotate(int rotation, int x, int y, int maxQuantity)
+    {
+        int2 temp = new int2(x, y);
+        if (rotation == 1)
+        {
+            temp.x = y;
+            temp.y = maxQuantity - 1 - x;
+        } 
+        else if (rotation == 2)
+        {
+            temp.x = maxQuantity - 1 - x;
+            temp.y = maxQuantity - 1 - y;
+        }
+        else if(rotation == 3)
+        {
+            temp.x = maxQuantity - 1 - y;
+            temp.y = x;
+        }
+        return temp;
+    }
 
 }

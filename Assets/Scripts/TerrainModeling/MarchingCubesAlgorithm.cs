@@ -28,7 +28,9 @@ public class MarchingCubesAlgorithm : Algorithm
         {
             for (t.z = 0; t.z < terrain.chunkDetail; t.z++)
             {
-                temp = start + (t.x * d * TerrainManagerData.dir[axisID].c0) + ((terrain.chunkDetail - 1) * TerrainManagerData.dir[axisID].c2 * d) + (t.z * d * TerrainManagerData.dir[axisID].c1);
+                temp = start + (t.x * d * TerrainManagerData.dir[axisID].c0) + 
+                    ((terrain.chunkDetail - 1) * TerrainManagerData.dir[axisID].c2 * d) + 
+                    (t.z * d * TerrainManagerData.dir[axisID].c1);
                 cell.SetFirstValues(t, temp, d, terrain.noiseOffset);
                 if (cell.index == 255)
                     continue;
@@ -59,6 +61,7 @@ public class MarchingCubesAlgorithm : Algorithm
         Mesh m = new Mesh();
         m.vertices = SquareToCircle(center).ToArray();
         m.triangles = triangles.ToArray();
+        m.colors = colors.ToArray();
         m.RecalculateNormals();
         return m;
     }
@@ -82,13 +85,20 @@ public class MarchingCubesAlgorithm : Algorithm
         ax.y = Mathf.Abs(ax.y);
         ax.z = Mathf.Abs(ax.z);
         List<Vector3> newVertexList = new List<Vector3>();
+        colors.Clear();
         for (int i = 0; i < vertexList.Count; i++)
         {
+
             temp = vertexList[i] + (Vector3)center;
             height = (temp.x * up.x) + (temp.y * up.y) + (temp.z * up.z);
+            if(!terrain.showTemperature)
+                colors.Add(terrain.GetHumidity(axisID, temp));
+
             temp = (temp * ax) + (up * terrain.planetRadius);
             newVertex = temp.normalized * height;
             newVertexList.Add(newVertex);
+            if(terrain.showTemperature)
+                colors.Add(terrain.GetTemperature(height, newVertex.y));
         }
         return newVertexList;
     }

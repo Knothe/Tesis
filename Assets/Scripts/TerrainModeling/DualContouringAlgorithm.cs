@@ -110,7 +110,7 @@ public class DualContouringAlgorithm : Algorithm
         float v2 = cell.pointValues[index2];
         float3 v = VertexInterpolation(cell.pointList[index1], cell.pointList[index2], v1, v2);
         edges.Add(temp, new CubeEdge(interpVertex.Count, cell.GetPosition(), new float3x2(cell.pointList[index1], cell.pointList[index2])));
-        interpVertex.Add(new HermiteData(v, cell.GetPointNormal(v, terrain.noiseOffset, terrain.noiseYScale)));
+        interpVertex.Add(new HermiteData(v, cell.GetPointNormal(v, terrain.noiseOffset, 0)));
         return interpVertex[edges[temp].hermiteIndex];
     }
 

@@ -33,8 +33,17 @@ public class Node
         faceLocation = pos;
         AddData(axis, t, cp);
         middlePos += pos;
-        cubePosition = t.faceStart[axisID] + (pos.x * t.resolutionVectors[axisID].c0) + (pos.y * t.resolutionVectors[axisID].c1) + (pos.z * t.resolutionVectors[axisID].c2);
-        center = t.faceStart[axisID] + (middlePos.x * t.resolutionVectors[axisID].c0) + (middlePos.y * t.resolutionVectors[axisID].c1) + (middlePos.z * t.resolutionVectors[axisID].c2);
+        float3 temp = float3.zero;
+        temp[TerrainManagerData.axisIndex[axis][0]] = pos.x * t.resolutionVectors[axisID].x;
+        temp[TerrainManagerData.axisIndex[axis][1]] = pos.y * t.resolutionVectors[axisID].y;
+        temp[TerrainManagerData.axisIndex[axis][2]] = pos.z * t.resolutionVectors[axisID].z;
+        cubePosition = t.faceStart[axisID] + temp;
+
+        temp[TerrainManagerData.axisIndex[axis][0]] = middlePos.x * t.resolutionVectors[axisID].x;
+        temp[TerrainManagerData.axisIndex[axis][1]] = middlePos.y * t.resolutionVectors[axisID].y;
+        temp[TerrainManagerData.axisIndex[axis][2]] = middlePos.z * t.resolutionVectors[axisID].z;
+        center = t.faceStart[axisID] + temp;
+
         spherePosition = CubeToSphere(cubePosition);
         sphereCenter = CubeToSphere(center);
         isActive = false;
@@ -79,8 +88,14 @@ public class Node
 
     public bool IsVisible()
     {
-        Vector3 dif = data.terrain.playerRelativePosition.normalized - sphereChunkDirection;
-        isVisible = dif.magnitude < 1.414f;
+        if (!data.terrain.showAll)
+        {
+            Vector3 dif = data.terrain.playerRelativePosition.normalized - sphereChunkDirection;
+            isVisible = dif.magnitude < 1.414f;
+        }
+        else
+            isVisible = true;
+        
         return isVisible; // sqrt(2)
     }
 

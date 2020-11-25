@@ -6,6 +6,7 @@ using UnityEngine;
 public class Algorithm
 {
     protected List<Vector3> vertexList;
+    protected List<Color> colors;
     public TerrainInfo terrain { protected set; get; }
     protected int axisID;
     protected int level;
@@ -19,6 +20,7 @@ public class Algorithm
         level = l;
         childPos = cp;
         voxelDataGenerated = false;
+        colors = new List<Color>();
     }
 
     public virtual bool GenerateVoxelData(float3 center)

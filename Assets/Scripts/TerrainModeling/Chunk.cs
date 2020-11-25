@@ -21,7 +21,7 @@ public class Chunk : MonoBehaviour
         meshCollider = gameObject.GetComponent<MeshCollider>();
         gameObject.GetComponent<MeshRenderer>().material = m;
         gameObject.SetActive(true);
-        gameObject.GetComponent<MeshRenderer>().material.color = Color.white;
+        //gameObject.GetComponent<MeshRenderer>().material.color = Color.white;
         //chunkListIndex = index;
     }
 
@@ -42,7 +42,7 @@ public class Chunk : MonoBehaviour
 
     public void IsLimit()
     {
-        gameObject.GetComponent<MeshRenderer>().material.color = Color.red;
+        //gameObject.GetComponent<MeshRenderer>().material.color = Color.red;
     }
 
 }

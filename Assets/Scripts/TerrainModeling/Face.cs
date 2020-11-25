@@ -34,7 +34,7 @@ public class Face
         parent = g.transform;
     }
 
-    public void GenerateChunks(Material m)
+    public void GenerateChunks(Material m, int chunkHeight)
     {
         mat = m;
         activeChunks.Clear();
@@ -48,7 +48,7 @@ public class Face
         {
             for(temp.y = 0; temp.y < resolution; temp.y++)
             {
-                for(temp.z = -1; temp.z < 1; temp.z++)
+                for(temp.z = -chunkHeight; temp.z < chunkHeight; temp.z++)
                 {
                     squarePoint = temp * reescale;
                     if (!detailList.ContainsKey(squarePoint))
@@ -84,16 +84,9 @@ public class Face
                 }
                 else if (!detailLimitNode.ContainsKey(key) && (n.level != node.level || !n.isActive))
                 {
-                    //k = n.GetIDValue();
                     detailLimitNode.Add(key, node);
                     if (node.inGameChunk != null)
                         node.inGameChunk.IsLimit();
-                    //if (!detailLimitNode.ContainsKey(k))
-                    //{
-                    //    detailLimitNode.Add(k, n);
-                    //    if(n.inGameChunk != null)
-                    //        n.inGameChunk.IsLimit();
-                    //}
                 }
             }
         }
@@ -104,7 +97,6 @@ public class Face
     {
         Node temp = new Node(null, 0, axisID, index, middleAdd, terrain, 0);
         detailList.Add(index, temp);
-        //GenerateChunk(temp);
         CheckDetail(temp);
     }
 
