@@ -17,6 +17,7 @@ public class TerrainManager : MonoBehaviour
     {
         planetData.SetTerrainManager(this);
         GenerateTerrain();
+        planetData.humidityCount++;
     }
 
     private void Update()
@@ -252,6 +253,7 @@ public class TerrainManager : MonoBehaviour
         for (int i = 0; i < 6; i++)
             faces[i].GenerateMesh(ref updateVisibilityNodes, ref detailLimitNode);
         Debug.Log(Time.realtimeSinceStartup - time);
+        planetData.humidityCount--;
     }
 
     void DeleteAllChilds()
@@ -348,6 +350,39 @@ public static class TerrainManagerData
         new int4(0, 2, 1, 3),
         new int4(2, 0, 1, 3)
     };
+
+    public static int3 RotatePointHumidity(int face, int x, int y, int maxQuantity)
+    {
+        int checkFaceID;
+        if (x < 0)
+        {
+            x += maxQuantity - 1;
+            checkFaceID = 1;
+        }
+        else if (x >= maxQuantity)
+        {
+            x++;
+            x -= maxQuantity;
+            checkFaceID = 0;
+        }
+        else if (y < 0)
+        {
+            y += maxQuantity - 1;
+            checkFaceID = 3;
+        }
+        else if (y >= maxQuantity)
+        {
+            y++;
+            y -= maxQuantity;
+            checkFaceID = 2;
+        }
+        else
+            return new int3(face, x, y);
+
+        int2 temp = Rotate(CheckRotation(face, neighborFace[face][checkFaceID]), x, y, maxQuantity);
+
+        return new int3(neighborFace[face][checkFaceID], temp.x, temp.y);
+    }
 
     public static int3 RotatePoint(int face, int x, int y, int maxQuantity)
     {

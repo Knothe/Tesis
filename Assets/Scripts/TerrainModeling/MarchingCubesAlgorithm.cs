@@ -79,7 +79,7 @@ public class MarchingCubesAlgorithm : Algorithm
     {
         float height;
         Vector3 temp, newVertex;
-        float3 up = TerrainManagerData.dir[axisID].c2;
+        Vector3 up = TerrainManagerData.dir[axisID].c2;
         float3 ax = TerrainManagerData.dir[axisID].c0 + TerrainManagerData.dir[axisID].c1;
         ax.x = Mathf.Abs(ax.x);
         ax.y = Mathf.Abs(ax.y);
@@ -91,14 +91,23 @@ public class MarchingCubesAlgorithm : Algorithm
 
             temp = vertexList[i] + (Vector3)center;
             height = (temp.x * up.x) + (temp.y * up.y) + (temp.z * up.z);
-            if(!terrain.showTemperature)
-                colors.Add(terrain.GetHumidity(axisID, temp));
-
-            temp = (temp * ax) + (up * terrain.planetRadius);
+            temp = temp * ax;
+            
+            temp = temp + (up * terrain.planetRadius);
             newVertex = temp.normalized * height;
             newVertexList.Add(newVertex);
-            if(terrain.showTemperature)
-                colors.Add(terrain.GetTemperature(height, newVertex.y));
+            if (terrain.showBiome)
+            {
+                colors.Add(terrain.GetBiome(axisID, height, newVertex.y, temp));
+            }
+            else
+            {
+                if (!terrain.showTemperature)
+                    colors.Add(terrain.GetHumidity(axisID, temp));
+                else
+                    colors.Add(terrain.GetTemperature(height, newVertex.y));
+            }
+            
         }
         return newVertexList;
     }
