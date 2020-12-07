@@ -131,9 +131,7 @@ public class PlanetInfoDrawer : PropertyDrawer
             r = EditorGUILayout.GetControlRect(true, 16);
             EditorGUI.ObjectField(r, t[13]);
 
-            //SetLabel("Number of biomes");
             t[14].intValue = EditorGUILayout.IntSlider(new GUIContent("Number of biomes"), t[14].intValue, 1, 9);
-            //t[14].intValue = EditorGUI.IntField(r, t[14].intValue);
             EditorGUI.indentLevel--;
         }
         debug = EditorGUILayout.Foldout(debug, "Debug");
@@ -190,6 +188,6 @@ public class PlanetInfoDrawer : PropertyDrawer
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        return base.GetPropertyHeight(property, label);
+        return 0;
     }
 }

@@ -218,6 +218,8 @@ public class TerrainManager : MonoBehaviour
 
     private void OnValidate()
     {
+        if (planetData == null)
+            return;
         if (planetData.settings.Count < 3)
         {
             Debug.Log("Minimum Size of 3");
