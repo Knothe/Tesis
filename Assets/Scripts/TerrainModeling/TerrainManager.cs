@@ -5,9 +5,9 @@ using UnityEngine;
 
 public class TerrainManager : MonoBehaviour
 {
+    public Material defaultMaterial;
     [SerializeField]
     public TerrainInfo planetData;
-    public Material defaultMaterial;
     Face[] faces = new Face[6];
 
     Dictionary<int4, Node> updateVisibilityNodes = new Dictionary<int4, Node>();
@@ -218,6 +218,8 @@ public class TerrainManager : MonoBehaviour
 
     private void OnValidate()
     {
+        if (planetData == null)
+            return;
         if (planetData.settings.Count < 3)
         {
             Debug.Log("Minimum Size of 3");

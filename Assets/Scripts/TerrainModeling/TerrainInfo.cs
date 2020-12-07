@@ -19,7 +19,7 @@ public class TerrainInfo
     public bool drawAsSphere;
     public bool showAll;
     public int humidityCount;
-    public float humidityMove; //No se me ocurrió otra cosa xd
+    public float humidityMove;
     public bool showTemperature;
     public bool showBiome;
     public Gradient temperatureGradient;
@@ -49,9 +49,25 @@ public class TerrainInfo
     float[,,] humidityValues;   // face, x, y
     Color[] biomes { get; set; }
 
-    public TerrainInfo()
+    public TerrainInfo(float r, int mH, bool algorithm, int minCPF, int maxCPF, int chunkD, List<NoiseSettings> s, float3 offset)
     {
+        planetRadius = r;
+        minChunkPerFace = minCPF;
+        maxChunkPerFace = maxCPF;
+        chunkDetail = chunkD;
+        maxHeight = mH;
+        isMarchingCube = algorithm;
+        settings = s;
+        noiseOffset = offset;
+    }
 
+    public void SetClimate(int hCount, float hMove, Gradient tGrad, Gradient hGradient, int bQuantity)
+    {
+        humidityCount = hCount;
+        humidityMove = hMove;
+        temperatureGradient = tGrad;
+        humidityGradient = hGradient;
+        biomeQuantity = bQuantity;
     }
 
     public void InstantiateNoise()
@@ -473,6 +489,7 @@ public class TerrainInfo
     }
     #endregion
 
+    #region MoveHumidity
     bool MoveHumidity(ref List<HashSet<int3>> current, ref List<HashSet<int3>> previous, float addHumidity)
     {
         List<HashSet<int3>> next = new List<HashSet<int3>>();
@@ -557,11 +574,7 @@ public class TerrainInfo
         point[TerrainManagerData.axisIndex[f].y] += y * humidityResVec[f].y;
         return point;
     }
-
-    
-
-    
-
+    #endregion
 }
 
 [Serializable]
