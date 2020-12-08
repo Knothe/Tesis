@@ -188,11 +188,14 @@ public class TerrainInfo
     {
         terrainManager = t;
         playerRelativePosition = player.transform.position - terrainManager.transform.position;
+        playerRelativePosition = terrainManager.transform.InverseTransformDirection(playerRelativePosition);
     }
 
     public void Update()
     {
         playerRelativePosition = player.transform.position - terrainManager.transform.position;
+
+        playerRelativePosition = terrainManager.transform.InverseTransformDirection(playerRelativePosition);
     }
 
     public Node GetNode(int faceID, int myLevel, int3 myPos, int3 wantedPos)

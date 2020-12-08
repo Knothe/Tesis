@@ -36,6 +36,7 @@ public class Chunk : MonoBehaviour
             gameObject.transform.localPosition = Vector3.zero;
         else
             gameObject.transform.localPosition = data.cubePosition;
+        gameObject.transform.localRotation = Quaternion.identity;
         spherePosition = data.faceLocation;
         meshFilter.sharedMesh = m;
     }

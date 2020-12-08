@@ -25,6 +25,8 @@ public class CreateWorldWindow : EditorWindow
     Gradient humidityGrad = new Gradient();
     int biomeQuantity;
 
+    Vector2 scrollPosition = Vector2.zero;
+    string planetName = "";
     Rect r = Rect.zero;
 
     [MenuItem("Window/World Generator")]
@@ -51,6 +53,31 @@ public class CreateWorldWindow : EditorWindow
 
     private void OnGUI()
     {
+        r = EditorGUILayout.GetControlRect(false, 18);
+        EditorGUI.LabelField(r, "Name");
+        r.x += 50;
+        r.width = (r.width / 2) - 60;
+        planetName = EditorGUI.TextField(r, planetName);
+        r.x += r.width + 10;
+        r.width += 60;
+        if (GUI.Button(r, "Generate Planet"))
+        {
+            if (!CheckDetailValidity())
+                Debug.Log("Chunks per face don't match");
+            else
+            {
+                GameObject g;
+                if(planetName == "")
+                    g = new GameObject("New Planet", typeof(TerrainManager));
+                else
+                    g = new GameObject(planetName, typeof(TerrainManager));
+                TerrainManager t = g.GetComponent<TerrainManager>();
+                t.planetData = new TerrainInfo(radius, maxHeight, algorithm, minChunkPerFace, maxChunkPerFace, chunkDetail, settings, noiseOffset);
+                t.planetData.SetClimate(humidityCount, humidityMove, temperatureGrad, humidityGrad, biomeQuantity);
+            }
+        }
+
+        scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, true);
         EditorGUI.indentLevel = 0;
         EditorGUILayout.LabelField("General");
         EditorGUI.indentLevel++;
@@ -80,8 +107,6 @@ public class CreateWorldWindow : EditorWindow
         EditorGUI.LabelField(r, new GUIContent("Max"));
         r.x += 30;
         maxChunkPerFace = EditorGUI.IntField(r, maxChunkPerFace);
-
-        
 
         SetLabel("Chunk Detail");
         chunkDetail = EditorGUI.IntField(r, chunkDetail);
@@ -168,18 +193,8 @@ public class CreateWorldWindow : EditorWindow
         temperatureGrad = EditorGUILayout.GradientField(new GUIContent("Temperature Gradient"), temperatureGrad);
         humidityGrad = EditorGUILayout.GradientField(new GUIContent("Humidity Gradient"), humidityGrad);
         EditorGUI.indentLevel--;
-        if (GUILayout.Button("Generate Planet"))
-        {
-            if (!CheckDetailValidity())
-                Debug.Log("Chunks per face don't match");
-            else
-            {
-                GameObject g = new GameObject("New Planet", typeof(TerrainManager));
-                TerrainManager t = g.GetComponent<TerrainManager>();
-                t.planetData = new TerrainInfo(radius, maxHeight, algorithm, minChunkPerFace, maxChunkPerFace, chunkDetail, settings, noiseOffset);
-                t.planetData.SetClimate(humidityCount, humidityMove, temperatureGrad, humidityGrad, biomeQuantity);
-            }
-        }
+        
+        GUILayout.EndScrollView();
     }
 
     bool CheckDetailValidity()

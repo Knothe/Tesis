@@ -31,6 +31,7 @@ public class Face
         GameObject g = new GameObject("Face" + axisID);
         g.transform.parent = p;
         g.transform.localPosition = Vector3.zero;
+        g.transform.localRotation = Quaternion.identity;
         parent = g.transform;
     }
 
