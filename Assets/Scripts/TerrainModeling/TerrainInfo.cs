@@ -372,7 +372,7 @@ public class TerrainInfo
                     if (humidityValues[face, i, j] == 0)
                     {
                         point = PlainToWorld(face, i, j);
-                        value = noise.Evaluate((point + settings[0].centre) * settings[0].scale);
+                        value = noise.Evaluate((point + noiseOffset + settings[0].centre) * settings[0].scale);
                         if (value >= 0)
                             humidityValues[face, i, j] = .001f;
                         else

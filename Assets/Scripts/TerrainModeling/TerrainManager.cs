@@ -418,6 +418,13 @@ public static class TerrainManagerData
         return new int3(neighborFace[face][checkFaceID], temp.x, temp.y);
     }
 
+    public static int2 RotateSimple(int face1, int face2, int x, int y, int maxQuantity)
+    {
+        int rotation = CheckRotation(face1, face2);
+        int2 r = Rotate(rotation, x, y, maxQuantity);
+        return r;
+    }
+
     static int CheckRotation(int originFace, int nextFace)
     {
         if (originFace == 0)

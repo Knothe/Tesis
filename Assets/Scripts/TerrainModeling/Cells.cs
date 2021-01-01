@@ -18,9 +18,11 @@ public class Cells
     protected int ax;
     protected int levelOfDetail;
     protected TerrainInfo terrain;
+    protected int id;
 
     public Cells(int faceID, int l, TerrainInfo t)
     {
+        id = faceID;
         axis = (int3x3)TerrainManagerData.dir[faceID];
         indexModifiers[0] = int3.zero;
         indexModifiers[1] = axis.c0;
@@ -35,7 +37,6 @@ public class Cells
         levelOfDetail = l;
         terrain = t;
     }
-
 }
 
 public class MarchingCell : Cells
@@ -102,38 +103,59 @@ public class DualCell : Cells
     float size;
     int3 pos;
 
-    public DualCell(int a, int l, TerrainInfo t) : base(a, l, t)
+    int3[] relativeIndexModifiers = new int3[8];
+
+    public DualCell(int a, int l, TerrainInfo t, float s) : base(a, l, t)
     {
-        
+        size = s;
+        relativeIndexModifiers[0] = new int3(0, 0, 0);   
+        relativeIndexModifiers[1] = new int3(1, 0, 0);   
+        relativeIndexModifiers[2] = new int3(1, 0, 1);   
+        relativeIndexModifiers[3] = new int3(0, 0, 1);   
+        relativeIndexModifiers[4] = new int3(0, 1, 0);   
+        relativeIndexModifiers[5] = new int3(1, 1, 0);   
+        relativeIndexModifiers[6] = new int3(1, 1, 1);   
+        relativeIndexModifiers[7] = new int3(0, 1, 1);
     }
 
     public void SetFirstValues(int3 p, float3 point, float s, float3 offset)
     {
         float3 noisePoint;
+        float3 temp;
+        int3 t = p;
         p = (p.y * axis.c2) + (p.x * axis.c0) + (p.z * axis.c1);
         for (int i = 0; i < 8; i++)
         {
             pointList[i] = point + ((float3)indexModifiers[i] * s);
-            relativeIndex[i] = p + indexModifiers[i];
+            relativeIndex[i] = t + relativeIndexModifiers[i];
+            temp = p + indexModifiers[i];
             noisePoint = pointList[i];
             noisePoint[ax] = terrain.planetRadius * axis.c2[ax];
             noiseValues[i] = terrain.GetNoiseValue(noisePoint + offset, levelOfDetail);
             pointValues[i] = noiseValues[i] - (Mathf.Abs(pointList[i][ax]) - terrain.planetRadius);
-            pointList[i] = (float3)relativeIndex[i] * s;
+            pointList[i] = temp * s;
         }
+        size = s;
         SetIndex();
     }
 
+    //pointList[i] = new float3(relativeIndex[i][TerrainManagerData.axisIndex[id][0]] * TerrainManagerData.dirMult[id][0],
+    //    relativeIndex[i][TerrainManagerData.axisIndex[id][1]] * TerrainManagerData.dirMult[id][1],
+    //    relativeIndex[i][TerrainManagerData.axisIndex[id][2]] * TerrainManagerData.dirMult[id][2]) * s;
+        
     public void SetValues(int3 p, float3 point, float s, float3 offset)
     {
-        p = (p.y * axis.c2) + (p.x * axis.c0) + (p.z * axis.c1);
+        float3 temp;
+        int3 t = p;
         pos = p;
+        p = (p.y * axis.c2) + (p.x * axis.c0) + (p.z * axis.c1);
         for (int i = 0; i < 8; i++)
         {
             pointList[i] = point + ((float3)indexModifiers[i] * s);
-            relativeIndex[i] = p + indexModifiers[i];
+            relativeIndex[i] = t + relativeIndexModifiers[i];
+            temp = p + indexModifiers[i];
             pointValues[i] = noiseValues[i] - (Mathf.Abs(pointList[i][ax]) - terrain.planetRadius);
-            pointList[i] = (float3)relativeIndex[i] * s;
+            pointList[i] = temp * s;
         }
         SetIndex();
     }
