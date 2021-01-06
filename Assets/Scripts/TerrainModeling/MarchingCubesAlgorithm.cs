@@ -79,23 +79,15 @@ public class MarchingCubesAlgorithm : Algorithm
     {
         float height;
         Vector3 temp, newVertex;
-        Vector3 up = TerrainManagerData.dir[axisID].c2;
-        float3 ax = TerrainManagerData.dir[axisID].c0 + TerrainManagerData.dir[axisID].c1;
-        ax.x = Mathf.Abs(ax.x);
-        ax.y = Mathf.Abs(ax.y);
-        ax.z = Mathf.Abs(ax.z);
         List<Vector3> newVertexList = new List<Vector3>();
         colors.Clear();
         for (int i = 0; i < vertexList.Count; i++)
         {
-
             temp = vertexList[i] + (Vector3)center;
-            height = (temp.x * up.x) + (temp.y * up.y) + (temp.z * up.z);
-            temp = temp * ax;
-            
-            temp = temp + (up * terrain.planetRadius);
+            height = Mathf.Abs(temp[TerrainManagerData.axisIndex[axisID].z]);
+            temp[TerrainManagerData.axisIndex[axisID].z] = terrain.planetRadius * TerrainManagerData.dirMult[axisID].z;
             newVertex = temp.normalized * height;
-            newVertexList.Add(newVertex);
+
             if (terrain.showBiome)
             {
                 colors.Add(terrain.GetBiome(axisID, height, newVertex.y, temp));
@@ -108,6 +100,7 @@ public class MarchingCubesAlgorithm : Algorithm
                     colors.Add(terrain.GetTemperature(height, newVertex.y));
             }
             
+            newVertexList.Add(newVertex);
         }
         return newVertexList;
     }
@@ -167,7 +160,7 @@ public class MarchingCubesAlgorithm : Algorithm
         return p1 + p;
     }
     
-    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD, int otherAxisID)
+    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float4> p, int3 dif, int otherLOD, int otherAxisID, int vertices)
     {
 
     }

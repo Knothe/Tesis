@@ -33,6 +33,7 @@ public class Chunk : MonoBehaviour
     public void SetMesh(Mesh m)
     {
         if (data.data.terrain.drawAsSphere)
+            //gameObject.transform.localPosition = data.cubePosition;
             gameObject.transform.localPosition = Vector3.zero;
         else
             gameObject.transform.localPosition = data.cubePosition;

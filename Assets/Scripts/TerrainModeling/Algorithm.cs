@@ -8,7 +8,7 @@ public class Algorithm
     protected List<Vector3> vertexList;
     protected List<Color> colors;
     public TerrainInfo terrain { protected set; get; }
-    protected int axisID;
+    public int axisID { get; protected set; }
     protected int level;
     protected int childPos;
     public bool voxelDataGenerated { get; protected set; }
@@ -33,7 +33,7 @@ public class Algorithm
         return null;
     }
 
-    public virtual void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float3> p, int3 dif, int otherLOD, int otherAxisID)
+    public virtual void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float4> p, int3 dif, int otherLOD, int otherAxisID, int vertices)
     {
         
     }
