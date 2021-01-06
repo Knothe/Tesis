@@ -297,33 +297,21 @@ public class TerrainInfo
         float h = GetH(f, p);
         Color c = biomeTexture.GetPixel((int)(biomeTexture.width * t), (int)(biomeTexture.height * h));
         string id = ColorUtility.ToHtmlStringRGB(c);
-        if (id != "991818" && id != "DE410D" && id != "4682D2" && id != "4d1899")
-            if (!TerrainInfoData.colorIndexValules.ContainsKey(id))
-            {
-                if (id != "DB3F10" && id != "941418" && id != "B52410" && id != "4A1494" && id != "4A109C" && id != "394091" && id != "39438B" && id != "4C169C" &&
-                    id != "4A1699" && id != "4A1A94" && id != "416C5A" && id != "941818" && id != "9C1818" && id != "169A7B" && id != "4A1A94" && id != "169A7B" && id != "46D163"
-                    )
-                    h = 0;
-                return Color.black;
-            }
-        // "4A1699", "4A1A94", "416C5A", "941818", "9C1818", "169A7B", "4A1A94", "169A7B", "46D163"
+        if (!TerrainInfoData.colorIndexValules.ContainsKey(id))
+        {
+            //Debug.Log(id);
+            return Color.black;
+        }
         int index = TerrainInfoData.colorIndexValules[id];
-        return biomes[TerrainInfoData.biomeIndex[biomeQuantity - 1][index]];
+        return c;
+        //return biomes[TerrainInfoData.biomeIndex[biomeQuantity - 1][index]];
     }
 
     float GetHumidityValue(int f, Vector2 p)
     {
         int3 temp = TerrainManagerData.RotatePointHumidity(f, (int)p.x, (int)p.y, humidityCount);
-        if (temp.y < 0 || temp.y >= humidityCount)
-        {
-            Debug.Log("X");
+        if (temp.y < 0 || temp.y >= humidityCount || temp.z < 0 || temp.z >= humidityCount)
             return 0;
-        }
-        if (temp.z < 0 || temp.z >= humidityCount)
-        {
-            Debug.Log("Y");
-            return 0;
-        }
         if (humidityValues[temp.x, temp.y, temp.z] < 0)
             return 0;
         return humidityValues[temp.x, temp.y, temp.z];
@@ -593,15 +581,15 @@ public static class TerrainInfoData
 {
     public static Dictionary<string, int> colorIndexValules = new Dictionary<string, int>()
     {
-        {"991818", 0},  //
-        {"DE410D", 1},  //
-        {"6FDF0D", 2},
-        {"189A7B", 3},  // 
-        {"4D1899", 4},  // 
-        {"9A46D1", 5},
-        {"46D163", 6},  //
-        {"D9C01C", 7},
-        {"4682D2", 8}   //
+        {"4682D1", 0},  // Tundra
+        {"D9C01C", 1},  // Desierto
+        {"46D164", 2},  // Taiga
+        {"9A46D1", 3},  // Herbazal
+        {"4D1799", 4},  // Bosque Templado
+        {"17997B", 5},  // Selva Templada
+        {"DF410D", 6},  // Bosque Tropical
+        {"991717", 7},  // Selva Tropical
+        {"6FDF0D", 8}   // Sabana
     };
 
     public static Color[] biomeColor = {

@@ -239,6 +239,19 @@ public class TerrainManager : MonoBehaviour
 
     public void GenerateTerrain()
     {
+        
+        Debug.Log("Image Size (" + planetData.biomeTexture.width + ", " + planetData.biomeTexture.height + ")");
+        CheckColor(0, 0);       // Tundra
+        CheckColor(995, 590);   // Desierto
+        CheckColor(295, 0);   // Taiga
+        CheckColor(548, 505);   // Herbazal
+        CheckColor(567, 335);   // Bosque Templado
+        CheckColor(587, 0);   // Selva templada
+        CheckColor(995, 282);   // Bosque Tropical
+        CheckColor(995, 0);   // Selva Tropical
+        CheckColor(995, 450);   // Sabana
+        return;
+        
         float time = Time.realtimeSinceStartup;
         DeleteAllChilds();
         planetData.InstantiateNoise();
@@ -256,6 +269,17 @@ public class TerrainManager : MonoBehaviour
             faces[i].GenerateMesh(ref updateVisibilityNodes, ref detailLimitNode);
         Debug.Log(Time.realtimeSinceStartup - time);
         planetData.humidityCount--;
+    }
+
+    // Temporal for debugging
+    void CheckColor(int x, int y)
+    {
+        x = (int)((x / 996.0f) * planetData.biomeTexture.width);
+        y = (int)((y / 624.0f) * planetData.biomeTexture.height);
+        y = planetData.biomeTexture.height - y;
+        Color c = planetData.biomeTexture.GetPixel(x, y);
+        string id = ColorUtility.ToHtmlStringRGB(c);
+        Debug.Log("Color" + c);
     }
 
     void DeleteAllChilds()
