@@ -9,7 +9,7 @@ public class PlanetInfoDrawer : PropertyDrawer
 {
     Rect r = Rect.zero;
     bool general, noise, climate, debug, chunk;
-    SerializedProperty[] t = new SerializedProperty[19];
+    SerializedProperty[] t = new SerializedProperty[21];
     /*  General data:
      *      Radius                          0
      *      max Height                      1
@@ -60,6 +60,8 @@ public class PlanetInfoDrawer : PropertyDrawer
         t[16] = property.FindPropertyRelative("showAll");
         t[17] = property.FindPropertyRelative("showTemperature");
         t[18] = property.FindPropertyRelative("showBiome");
+        t[19] = property.FindPropertyRelative("biomeColors");
+        t[20] = property.FindPropertyRelative("useColors");
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -130,6 +132,14 @@ public class PlanetInfoDrawer : PropertyDrawer
 
             r = EditorGUILayout.GetControlRect(true, 16);
             EditorGUI.ObjectField(r, t[13]);
+
+            SetLabel("Use Only Colors");
+            t[20].boolValue = EditorGUI.Toggle(r, t[20].boolValue);
+            if (t[20].boolValue)
+            {
+                r = EditorGUILayout.GetControlRect(true, 16);
+                EditorGUI.ObjectField(r, t[19]);
+            }
 
             t[14].intValue = EditorGUILayout.IntSlider(new GUIContent("Number of biomes"), t[14].intValue, 1, 9);
             EditorGUI.indentLevel--;

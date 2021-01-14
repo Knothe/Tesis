@@ -233,8 +233,8 @@ public class DualContouringAlgorithm : Algorithm
         if (terrain.drawAsSphere)
         {
             m.vertices = SquareToCircle(vertexList).ToArray();
-            if (terrain.showBiome)
-                m.uv = SetUV(triangles).ToArray();
+            //if (terrain.showBiome)
+                //m.uv = SetUV(triangles).ToArray();
         }
         else
             m.vertices = vertexList.ToArray();
@@ -482,7 +482,7 @@ public class DualContouringAlgorithm : Algorithm
 
         if (id < 6)
         {
-            if (neighbors[id] == null)
+            if (neighbors[id] == null || neighbors[id].level != level)
                 return false;
             if (neighbors[id].data.axisID != axisID)
                 DifFace(ref ce, DualContouringData.otherEdgeData[id], DualContouringData.otherEdgeData[id].cubesIndex.x, thisEdge,
@@ -498,7 +498,13 @@ public class DualContouringAlgorithm : Algorithm
                 neighbors[otherEdgeData.cubesIndex.y] == null ||
                 neighbors[otherEdgeData.cubesIndex.z] == null)
                 return false;
-            if(neighbors[otherEdgeData.cubesIndex.x].axisID == axisID)
+
+            if (neighbors[otherEdgeData.cubesIndex.x].level != level ||
+                neighbors[otherEdgeData.cubesIndex.y].level != level ||
+                neighbors[otherEdgeData.cubesIndex.z].level != level)
+                return false;
+
+            if (neighbors[otherEdgeData.cubesIndex.x].axisID == axisID)
                 SameFace(ref ce, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.x], otherEdgeData.cubesIndex.x, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
             else
                 DifFace(ref ce, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.x], otherEdgeData.cubesIndex.x, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);

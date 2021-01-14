@@ -87,8 +87,12 @@ public class TextureWindow : EditorWindow
         EditorGUI.DrawPreviewTexture(new Rect(260, pos + 300, 255, 255), texture[0]);
         for(int i = 0; i < texture.Length; i++)
             TextureData(i);
+        GUILayout.BeginHorizontal();
         if (GUILayout.Button("Generate Main Texture"))
             GenerateMainTexture();
+        if (GUILayout.Button("Generate Scriptable Object"))
+            GenerateScriptableObject();
+        GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
         fileName = EditorGUILayout.TextField("File Name", fileName);
         size = EditorGUILayout.IntField("Size", size);
@@ -101,6 +105,19 @@ public class TextureWindow : EditorWindow
         float v = Mathf.Clamp((size - 100) / 400.0f, 0, 1);
         Debug.Log(v);
         extraValue = Mathf.Lerp(.05f, .01f, v);
+    }
+
+    void GenerateScriptableObject()
+    {
+        BiomeColors c = ScriptableObject.CreateInstance<BiomeColors>();
+        c.SetValues(color1, color2, color3, limitX, limitY, limitZ);
+        if (fileName == "")
+            fileName = "planetColors";
+        AssetDatabase.CreateAsset(c, "Assets/" + fileName + ".asset");
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        EditorUtility.FocusProjectWindow();
+        Selection.activeObject = c;
     }
 
     void GenerateMainTexture()

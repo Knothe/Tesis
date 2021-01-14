@@ -27,6 +27,8 @@ public class TerrainInfo
     public Texture2D biomeTexture;
     [Range(1, 9)]
     public int biomeQuantity;
+    public bool useColors;
+    public BiomeColors biomeColors;
 
     public int levelsOfDetail { get; private set; }
     public List<int> reescaleValues { get; private set; }
@@ -299,18 +301,28 @@ public class TerrainInfo
     {
         float t = GetT(height, yPos);
         if (t == -1)
-            return Color.blue;
+            return GetBiomePoint(9);
         float h = GetH(f, p);
         Color c = biomeTexture.GetPixel((int)(biomeTexture.width * t), (int)(biomeTexture.height * h));
         string id = ColorUtility.ToHtmlStringRGB(c);
         if (!TerrainInfoData.colorIndexValules.ContainsKey(id))
         {
-            //Debug.Log(id);
             return Color.black;
         }
         int index = TerrainInfoData.colorIndexValules[id];
-        //return c;
-        return biomes[TerrainInfoData.biomeIndex[biomeQuantity - 1][index]];
+
+        return GetBiomePoint(index);
+    }
+
+    Color GetBiomePoint(int index)
+    {
+        Color c;
+        float v = UnityEngine.Random.Range(0.0f, biomeColors.biomeList[index].limits[2]);
+        if (v < biomeColors.biomeList[index].limits[0])
+            return biomeColors.biomeList[index].colors[0];
+        else if (v < biomeColors.biomeList[index].limits[1])
+            return biomeColors.biomeList[index].colors[1];
+        return biomeColors.biomeList[index].colors[2];
     }
 
     public int GetBiomeNumber(int f, float height, float yPos, Vector3 p)
