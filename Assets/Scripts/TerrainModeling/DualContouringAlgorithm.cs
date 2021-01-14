@@ -230,8 +230,12 @@ public class DualContouringAlgorithm : Algorithm
                 edges[key] = new CubeEdge(edges[key]);
         }
         Mesh m = new Mesh();
-        if(terrain.drawAsSphere)
-            m.vertices = SquareToCircle(vertexList, center).ToArray();
+        if (terrain.drawAsSphere)
+        {
+            m.vertices = SquareToCircle(vertexList).ToArray();
+            //if (terrain.showBiome)
+                //m.uv = SetUV(triangles).ToArray();
+        }
         else
             m.vertices = vertexList.ToArray();
         m.colors = colors.ToArray();
@@ -280,16 +284,65 @@ public class DualContouringAlgorithm : Algorithm
         return -1;                              // Somthing wrong
     }
 
-    List<Vector3> SquareToCircle(List<Vector3> p, float3 c)
+    // 0 Selva Tropical     1
+    // 1 Bosque Tropical    2
+    // 2 Sabana             4
+    // 3 Selva Templada     8
+    // 4 Bosque Templado    16
+    // 5 Herbazal           32
+    // 6 Taiga              64
+    // 7 Tundra             128
+    // 8 Desierto           256
+
+    List<Vector2> SetUV(List<int> triangles)
+    {
+        List<Vector2> uvValues = new List<Vector2>(new Vector2[vertexList.Count]);
+        int val;
+        int[] values = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
+        for(int i = 2; i < triangles.Count; i += 3)
+        {
+            val = values[biome[triangles[i]]];
+            if ((val & values[biome[triangles[i - 1]]]) != values[biome[triangles[i - 1]]])
+                val += values[biome[triangles[i - 1]]];
+
+            if ((val & values[biome[triangles[i - 2]]]) != values[biome[triangles[i - 2]]])
+                val += values[biome[triangles[i - 2]]];
+
+            if (TerrainManagerData.UVPositions.ContainsKey(val))
+            {
+
+                uvValues[triangles[i]] = GetUVPoint(val, biome[triangles[i]]);
+                uvValues[triangles[i - 1]] = GetUVPoint(val, biome[triangles[i - 1]]);
+                uvValues[triangles[i - 2]] = GetUVPoint(val, biome[triangles[i - 2]]);
+            }
+            else
+            {
+                uvValues[triangles[i]] = Vector2.zero;
+                uvValues[triangles[i - 1]] = Vector2.zero;
+                uvValues[triangles[i - 2]] = Vector2.zero;
+            }
+        }
+        return uvValues;
+    }
+
+    Vector2 GetUVPoint(int id, int biome)
+    {
+        Area a;
+        if (TerrainManagerData.UVPositions[id].ContainsKey(biome))
+            a = TerrainManagerData.UVPositions[id][biome];
+        else
+            return Vector2.zero;
+        return new Vector2(UnityEngine.Random.Range(a.limit1.x, a.limit2.x), UnityEngine.Random.Range(a.limit1.y, a.limit2.y));
+    }
+
+    List<Vector3> SquareToCircle(List<Vector3> p)
     {
         float height;
         Vector3 temp, newVertex;
-        float4 newPoint;
         List<Vector3> newVertexList = new List<Vector3>();
         colors.Clear();
         foreach (Vector3 v in p)
         {
-            //newPoint = SquareToSphere(v);
             temp = v + (Vector3)start;
             height = Mathf.Abs(temp[TerrainManagerData.axisIndex[axisID].z]);
             temp[TerrainManagerData.axisIndex[axisID].z] = terrain.planetRadius * TerrainManagerData.dirMult[axisID].z;
@@ -298,18 +351,20 @@ public class DualContouringAlgorithm : Algorithm
             if (terrain.showBiome)
             {
                 colors.Add(terrain.GetBiome(axisID, height, newVertex.y, temp));
+                biome.Add(terrain.GetBiomeNumber(axisID, height, newVertex.y, temp));
             }
             else
             {
                 if (!terrain.showTemperature)
+                {
                     colors.Add(terrain.GetHumidity(axisID, temp));
+                }
                 else
+                {
                     colors.Add(terrain.GetTemperature(height, newVertex.y));
+
+                }
             }
-            //height = newVertex.magnitude;
-            //newVertex = newVertex.normalized * prevLenght;
-            //newVertex[TerrainManagerData.axisIndex[axisID].z] = height * TerrainManagerData.dirMult[axisID].z;
-            //newVertex -= (Vector3)center;
             newVertexList.Add(newVertex);
         }
 
@@ -427,7 +482,7 @@ public class DualContouringAlgorithm : Algorithm
 
         if (id < 6)
         {
-            if (neighbors[id] == null)
+            if (neighbors[id] == null || neighbors[id].level != level)
                 return false;
             if (neighbors[id].data.axisID != axisID)
                 DifFace(ref ce, DualContouringData.otherEdgeData[id], DualContouringData.otherEdgeData[id].cubesIndex.x, thisEdge,
@@ -443,7 +498,13 @@ public class DualContouringAlgorithm : Algorithm
                 neighbors[otherEdgeData.cubesIndex.y] == null ||
                 neighbors[otherEdgeData.cubesIndex.z] == null)
                 return false;
-            if(neighbors[otherEdgeData.cubesIndex.x].axisID == axisID)
+
+            if (neighbors[otherEdgeData.cubesIndex.x].level != level ||
+                neighbors[otherEdgeData.cubesIndex.y].level != level ||
+                neighbors[otherEdgeData.cubesIndex.z].level != level)
+                return false;
+
+            if (neighbors[otherEdgeData.cubesIndex.x].axisID == axisID)
                 SameFace(ref ce, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.x], otherEdgeData.cubesIndex.x, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
             else
                 DifFace(ref ce, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.x], otherEdgeData.cubesIndex.x, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
@@ -561,22 +622,12 @@ public class DualContouringAlgorithm : Algorithm
 
     float4 SquareToSphere(float3 point)
     {
-        Vector3 temp = point + start;
-        float height = Mathf.Abs(temp[TerrainManagerData.axisIndex[axisID].z]);
-        temp[TerrainManagerData.axisIndex[axisID].z] = terrain.planetRadius * TerrainManagerData.dirMult[axisID].z;
-        float prevLenght = temp.magnitude;
-        temp = temp.normalized * height;
-        return new float4(temp.x, temp.y, temp.z, prevLenght);
+        return new float4(point.x + start.x, point.y + start.y, point.z + start.z, 0);
     }
 
     float3 SphereToSquare(float4 point)
     {
-        Vector3 temp = new Vector3(point.x, point.y, point.z);
-        float height = temp.magnitude;
-        temp = temp.normalized * point.w;
-        temp[TerrainManagerData.axisIndex[axisID].z] = height * TerrainManagerData.dirMult[axisID].z;
-        temp -= (Vector3)start;
-        return temp;
+        return new float3(point.x - start.x, point.y - start.y, point.z - start.z);
     }
 
     float4 DifFaceSquareToSphere(float3 point)
@@ -584,7 +635,6 @@ public class DualContouringAlgorithm : Algorithm
         Vector3 temp = point + start;
         float height = Mathf.Abs(temp[TerrainManagerData.axisIndex[axisID].z]);
         temp[TerrainManagerData.axisIndex[axisID].z] = terrain.planetRadius * TerrainManagerData.dirMult[axisID].z;
-        temp = temp.normalized;
         return new float4(temp.x, temp.y, temp.z, height);
     }
 

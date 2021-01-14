@@ -240,18 +240,6 @@ public class TerrainManager : MonoBehaviour
     public void GenerateTerrain()
     {
         
-        Debug.Log("Image Size (" + planetData.biomeTexture.width + ", " + planetData.biomeTexture.height + ")");
-        CheckColor(0, 0);       // Tundra
-        CheckColor(995, 590);   // Desierto
-        CheckColor(295, 0);   // Taiga
-        CheckColor(548, 505);   // Herbazal
-        CheckColor(567, 335);   // Bosque Templado
-        CheckColor(587, 0);   // Selva templada
-        CheckColor(995, 282);   // Bosque Tropical
-        CheckColor(995, 0);   // Selva Tropical
-        CheckColor(995, 450);   // Sabana
-        return;
-        
         float time = Time.realtimeSinceStartup;
         DeleteAllChilds();
         planetData.InstantiateNoise();
@@ -486,7 +474,7 @@ public static class TerrainManagerData
         }
         return 0;
     }
-    
+
     static int2 Rotate(int rotation, int x, int y, int maxQuantity)
     {
         int2 temp = new int2(x, y);
@@ -494,13 +482,13 @@ public static class TerrainManagerData
         {
             temp.x = y;
             temp.y = maxQuantity - 1 - x;
-        } 
+        }
         else if (rotation == 2)
         {
             temp.x = maxQuantity - 1 - x;
             temp.y = maxQuantity - 1 - y;
         }
-        else if(rotation == 3)
+        else if (rotation == 3)
         {
             temp.x = maxQuantity - 1 - y;
             temp.y = x;
@@ -508,4 +496,39 @@ public static class TerrainManagerData
         return temp;
     }
 
+    public static Dictionary<int, Dictionary<int, Area>> UVPositions = new Dictionary<int, Dictionary<int, Area>>
+    {
+        {1,     new Dictionary<int, Area>(){ {0, new Area(.7625f, .61f, .9875f, .79f)} } },
+        {2,     new Dictionary<int, Area>(){ {1, new Area(.7625f, .41f, .9875f, .59f)} } },
+        {4,     new Dictionary<int, Area>(){ {2, new Area(.7625f, .21f, .9875f, .39f)} } },
+        {8,     new Dictionary<int, Area>(){ {3, new Area(.5125f, .61f, .7375f, .79f)} } },
+        {16,    new Dictionary<int, Area>(){ {4, new Area(.5125f, .41f, .7375f, .59f)} } },
+        {32,    new Dictionary<int, Area>(){ {5, new Area(.5125f, .21f, .7375f, .39f)} } },
+        {64,    new Dictionary<int, Area>(){ {6, new Area(.2625f, .61f, .4875f, .79f)} } },
+        {128,   new Dictionary<int, Area>(){ {7, new Area(.0125f, .61f, .2375f, .79f)} } },
+        {256,   new Dictionary<int, Area>(){ {8, new Area(.7625f, .01f, .9875f, .19f)} } },
+        {512,   new Dictionary<int, Area>(){ {9, new Area(.7625f, .91f, .9875f, .99f)} } },
+    };
+
 }
+
+public class Area
+{
+    // 0
+    // 1
+    // 2
+    // 3
+    // 4
+    int triangle;
+    public float2 limit1 { get; private set; }
+    public float2 limit2 { get; private set; }
+
+    public Area(float l1x, float l1y, float l2x, float l2y)
+    {
+        limit1 = new float2(l1x, l1y);
+        limit2 = new float2(l2x, l2y);
+        triangle = 0;
+    }
+
+}
+
