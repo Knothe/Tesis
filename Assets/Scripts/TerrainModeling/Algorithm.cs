@@ -7,6 +7,8 @@ public class Algorithm
 {
     protected List<Vector3> vertexList;
     protected List<Color> colors;
+    protected List<Vector2> uv;
+    protected List<int> biome;
     public TerrainInfo terrain { protected set; get; }
     public int axisID { get; protected set; }
     protected int level;
@@ -21,6 +23,8 @@ public class Algorithm
         childPos = cp;
         voxelDataGenerated = false;
         colors = new List<Color>();
+        uv = new List<Vector2>();
+        biome = new List<int>();
     }
 
     public virtual bool GenerateVoxelData(float3 center)

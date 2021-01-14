@@ -48,6 +48,7 @@ public class TerrainInfo
 
     float[,,] humidityValues;   // face, x, y
     Color[] biomes { get; set; }
+    int[] biomeNumber;
 
     public TerrainInfo(float r, int mH, bool algorithm, int minCPF, int maxCPF, int chunkD, List<NoiseSettings> s, float3 offset)
     {
@@ -110,6 +111,7 @@ public class TerrainInfo
     void SetBiomes()
     {
         biomes = new Color[biomeQuantity];
+        biomeNumber = new int[biomeQuantity];
         int temp, rand;
         for(int i = 0; i < biomeQuantity; i++)
         {
@@ -118,9 +120,13 @@ public class TerrainInfo
             {
                 rand = UnityEngine.Random.Range(0, temp);
                 biomes[i] = TerrainInfoData.biomeColor[TerrainInfoData.randomBiome[biomeQuantity - 1][i][rand]];
+                biomeNumber[i] = TerrainInfoData.randomBiome[biomeQuantity - 1][i][rand];
             }
             else
+            {
                 biomes[i] = TerrainInfoData.biomeColor[TerrainInfoData.randomBiome[biomeQuantity - 1][i][0]];
+                biomeNumber[i] = TerrainInfoData.randomBiome[biomeQuantity - 1][i][0];
+            }
         }
     }
 
@@ -303,8 +309,20 @@ public class TerrainInfo
             return Color.black;
         }
         int index = TerrainInfoData.colorIndexValules[id];
-        return c;
-        //return biomes[TerrainInfoData.biomeIndex[biomeQuantity - 1][index]];
+        //return c;
+        return biomes[TerrainInfoData.biomeIndex[biomeQuantity - 1][index]];
+    }
+
+    public int GetBiomeNumber(int f, float height, float yPos, Vector3 p)
+    {
+        float t = GetT(height, yPos);
+        if (t == -1)
+            return 9; // Only top biomes have contact with water
+        float h = GetH(f, p);
+        Color c = biomeTexture.GetPixel((int)(biomeTexture.width * t), (int)(biomeTexture.height * h));
+        string id = ColorUtility.ToHtmlStringRGB(c);
+        int index = TerrainInfoData.colorIndexValules[id];
+        return index; // Modificar después
     }
 
     float GetHumidityValue(int f, Vector2 p)
@@ -581,15 +599,15 @@ public static class TerrainInfoData
 {
     public static Dictionary<string, int> colorIndexValules = new Dictionary<string, int>()
     {
-        {"4682D1", 0},  // Tundra
-        {"D9C01C", 1},  // Desierto
-        {"46D164", 2},  // Taiga
-        {"9A46D1", 3},  // Herbazal
+        {"991717", 0},  // Selva Tropical
+        {"DF410D", 1},  // Bosque Tropical
+        {"6FDF0D", 2},  // Sabana
+        {"17997B", 3},  // Selva Templada
         {"4D1799", 4},  // Bosque Templado
-        {"17997B", 5},  // Selva Templada
-        {"DF410D", 6},  // Bosque Tropical
-        {"991717", 7},  // Selva Tropical
-        {"6FDF0D", 8}   // Sabana
+        {"9A46D1", 5},  // Herbazal
+        {"46D164", 6},  // Taiga
+        {"4682D1", 7},  // Tundra
+        {"D9C01C", 8},  // Desierto
     };
 
     public static Color[] biomeColor = {

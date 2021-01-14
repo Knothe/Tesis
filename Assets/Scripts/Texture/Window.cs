@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,59 +17,45 @@ public class TextureWindow : EditorWindow
     float[] limitY;
     float[] limitZ;
     int size;
+    int l;
+    int L;
+    float extraValue;
     string fileName;
     Texture2D[] texture;
     float pos;
     Texture2D mainTexture;
 
-    // 1 Selva Tropical
-    // 2 Bosque Tropical
-    // 3 Sabana
-    // 4 Selva Templada
-    // 5 Bosque Templado
-    // 6 Herbazal
-    // 7 Taiga
-    // 8 Tundra
-    // 9 Desierto
+    // 0 Selva Tropical
+    // 1 Bosque Tropical
+    // 2 Sabana
+    // 3 Selva Templada
+    // 4 Bosque Templado
+    // 5 Herbazal
+    // 6 Taiga
+    // 7 Tundra
+    // 8 Desierto
+    // 9 Agua
 
-    int[][] cellBiome = {
-        new int[]{ 0, 0, 0, 0, 0, 0, 9, 9, 0, 0, 0},
-        new int[]{ 0, 0, 0, 0, 0,-3, 9, 9,-8, 8, 8},
-        new int[]{ 0, 0, 0, 3, 3,-3, 9, 9,-8, 8, 8},
-        new int[]{ 0, 5,-3, 3, 3,-3,-6,-6,-8, 8, 8},
-        new int[]{ 5, 5,-3, 3, 3,-3,-6,-6,-8, 8, 8},
-        new int[]{ 5, 5,-3, 3, 3,-3, 6, 6,-8, 8, 8},
-        new int[]{ 5, 5,-3,-3,-3,-3, 6, 6,-8,-8,-8},
-        new int[]{ 5, 5,-2,-3,-3,-2, 6, 6,-7,-8,-8},
-        new int[]{ 5, 5,-2, 2, 2,-2, 6, 6,-7, 7, 7},
-        new int[]{-5,-5,-2, 2, 2,-2,-6,-6,-7, 7, 7},
-        new int[]{-5,-5,-2, 2, 2,-2,-6,-6,-7, 7, 7},
-        new int[]{ 4, 4,-2, 2, 2,-2, 5, 5,-7, 7, 7},
-        new int[]{ 4, 4,-2,-2,-2,-2, 5, 5,-7,-4,-4},
-        new int[]{ 4, 4,-1,-2,-2,-1, 5, 5,-4,-4,-4},
-        new int[]{ 4, 4,-1, 1, 1,-1, 5, 5,-4, 4, 4},
-        new int[]{ 0, 4,-1, 1, 1,-1, 0, 0,-4, 4, 4},
-        new int[]{ 0, 0, 0, 1, 1, 0, 0, 0, 0, 4, 4}
+    string[] biomeName =
+    {
+        "Selva Tropical",
+        "Bosque Tropical",
+        "Sabana",
+        "Selva Templada",
+        "Bosque Templado",
+        "Herbazal",
+        "Taiga",
+        "Tundra",
+        "Desierto",
+        "Mar"
     };
 
-    int[][] cellBiomeAdd = {
-        new int[]{ 0, 0, 0, 0, 0, 0, 9, 9, 0, 0, 0},
-        new int[]{ 0, 0, 0, 0, 0,-9, 9, 9,-9, 8, 8},
-        new int[]{ 0, 0, 0, 3, 3,-9, 9, 9,-9, 8, 8},
-        new int[]{ 0, 5,-5, 3, 3,-9,-9,-9,-9, 8, 8},
-        new int[]{ 5, 5,-5, 3, 3,-6,-9,-9,-6, 8, 8},
-        new int[]{ 5, 5,-5, 3, 3,-6, 6, 6,-6, 8, 8},
-        new int[]{ 5, 5,-5,-2,-2,-6, 6, 6,-6,-7,-7},
-        new int[]{ 5, 5,-5,-2,-2,-6, 6, 6,-6,-7,-7},
-        new int[]{ 5, 5,-5, 2, 2,-6, 6, 6,-6, 7, 7},
-        new int[]{-4,-4,-5, 2, 2,-6,-5,-5,-6, 7, 7},
-        new int[]{-4,-4,-4, 2, 2,-5,-5,-5,-5, 7, 7},
-        new int[]{ 4, 4,-4, 2, 2,-5, 5, 5,-5, 7, 7},
-        new int[]{ 4, 4,-4,-1,-1,-5, 5, 5,-5,-7,-7},
-        new int[]{ 4, 4,-4,-1,-1,-5, 5, 5,-5,-7,-7},
-        new int[]{ 4, 4,-4, 1, 1,-5, 5, 5,-5, 4, 4},
-        new int[]{ 0, 4,-4, 1, 1,-5, 0, 0,-5, 4, 4},
-        new int[]{ 0, 0, 0, 1, 1, 0, 0, 0, 0, 4, 4}
+    int[,] cellBiome = {
+    { 7, 8, 8, 8},
+    { 7, 5, 5, 2},
+    { 7, 6, 4, 1},
+    { 7, 6, 3, 0},
+    { 9, 9, 9, 9}
     };
 
     [MenuItem("Window/TextureGenerator")]
@@ -77,7 +66,7 @@ public class TextureWindow : EditorWindow
 
     private void Awake()
     {
-        int quantity = 9;
+        int quantity = 10;
         texture = new Texture2D[quantity];
         color1 = new Color[quantity];
         color2 = new Color[quantity];
@@ -107,98 +96,116 @@ public class TextureWindow : EditorWindow
         pos = GUI.VerticalScrollbar(new Rect(position.width - 15, 0, 50, position.height), pos, 255, 0, -(255 * (texture.Length + 1)) + position.height - 25);
     }
 
+    void SetExtraValue()
+    {
+        float v = Mathf.Clamp((size - 100) / 400.0f, 0, 1);
+        Debug.Log(v);
+        extraValue = Mathf.Lerp(.05f, .01f, v);
+    }
+
     void GenerateMainTexture()
     {
-        int id, xMod, yMod;
-        mainTexture = new Texture2D(size * 11, size * 17, TextureFormat.RGBA32, true, true);
-        for (int i = 0; i < 11; i++)
+        mainTexture = new Texture2D(size * 4, size * 5, TextureFormat.RGBA32, true, true);
+        l = (int)(size * .05f);
+        L = l * 2;
+        SetExtraValue();
+        Debug.Log("(" + size + ", " + extraValue + ")");
+        for (int i = 0; i < mainTexture.width; i++)
+            for (int j = 0; j < mainTexture.height; j++)
+                mainTexture.SetPixel(i, j, Color.black);
+
+        for (int i = 0; i < 4; i++)
         {
-            for(int j = 0; j < 17; j++)
+            for(int j = 0; j < 5; j++)
             {
-                if (cellBiome[j][i] > 0)
-                    SetArea(i, j, cellBiome[j][i] - 1);
-                else if (cellBiome[j][i] < 0)
-                    SetMixedArea(i, j, Mathf.Abs(cellBiome[j][i]) - 1, Mathf.Abs(cellBiomeAdd[j][i]) - 1);
+                SetArea(i, j, cellBiome[j, i]);
             }
         }
 
-
-        //for(int x = 0; x < 3; x++)
-        //{
-        //    for (int y = 0; y < 3; y++)
-        //    {
-        //        id = (x * 3) + y;
-        //        xMod = 255 * x;
-        //        yMod = 255 * y;
-        //        for (int i = 0; i < texture[id].height; i++)
-        //        {
-        //            for (int j = 0; j < texture[id].width; j++)
-        //            {
-        //                mainTexture.SetPixel(i + xMod, j + yMod, texture[id].GetPixel(i, j));
-        //            }
-        //        }
-        //    }
-        //}
         mainTexture.Apply();
         SaveTexture();
+        Debug.Log("Texture generated");
+    }
+
+    void PointSetting(int i, int j, ref int2 bE, ref int2 eE, ref int2 bI, ref int2 eI)
+    {
+        int2 startPoint = new int2(i * size, j * size);
+        int2 finalPoint = new int2((i + 1) * size, (j + 1) * size);
+
+        bE = new int2(startPoint.x - l, startPoint.y - l);
+        eE = new int2(finalPoint.x + l, finalPoint.y + l);
+
+        bI = new int2(startPoint.x + l, startPoint.y + l);
+        eI = new int2(finalPoint.x - l, finalPoint.y - l);
     }
 
     void SetArea(int i, int j, int id)
     {
-        int startX = i * size;
-        int startY = j * size;
+        int2 bExternal = int2.zero;
+        int2 bInternal = int2.zero;
+        int2 eExternal = int2.zero;
+        int2 eInternal = int2.zero;
+
+        PointSetting(i, j, ref bExternal, ref eExternal, ref bInternal, ref eInternal);
+
         Color c;
         float v;
-        for(int x = 0; x < size; x++)
+        float a;
+        for(int x = bExternal.x; x < eExternal.x; x++)
         {
-            for(int y = 0; y < size; y++)
+            for(int y = bExternal.y; y < eExternal.y; y++)
             {
-                v = Random.Range(0.0f, limitZ[id]);
+                if (!isInsideTexture(x, y))
+                    continue;
+                a = GetPointIntensity(x, y, bInternal, eInternal);
+                v = UnityEngine.Random.Range(0.0f, limitZ[id]);
                 if (v < limitX[id])
                     c = color1[id];
                 else if (v < limitY[id])
                     c = color2[id];
                 else
                     c = color3[id];
-                mainTexture.SetPixel(startX + x, startY + y, c);
+                c = (c * a) + mainTexture.GetPixel(x, y);
+                mainTexture.SetPixel(x, y, c);
             }
         }
     }
 
-    void SetMixedArea(int i, int j, int id1, int id2)
+    float GetPointIntensity(int x, int y, int2 start, int2 end)
     {
-        int startX = i * size;
-        int startY = j * size;
-        Color c;
-        float v;
-        for (int x = 0; x < size; x++)
+        bool inside = true;
+        Vector2 length = Vector2.zero; 
+
+        if (x < start.x)
         {
-            for (int y = 0; y < size; y++)
-            {
-                if(Random.Range(0.0f, 1.0f) >= .5f)
-                {
-                    v = Random.Range(0.0f, limitZ[id1]);
-                    if (v < limitX[id1])
-                        c = color1[id1];
-                    else if (v < limitY[id1])
-                        c = color2[id1];
-                    else
-                        c = color3[id1];
-                }
-                else
-                {
-                    v = Random.Range(0.0f, limitZ[id2]);
-                    if (v < limitX[id2])
-                        c = color1[id2];
-                    else if (v < limitY[id2])
-                        c = color2[id2];
-                    else
-                        c = color3[id2];
-                }
-                
-                mainTexture.SetPixel(startX + x, startY + y, c);
-            }
+            length.x = start.x - x;
+            inside = false;
         }
+        else if (x >= end.x)
+        {
+            length.x = (x + 1) - end.x;
+            inside = false;
+        }
+
+        if (y < start.y)
+        {
+            length.y = start.y - y;
+            inside = false;
+        }
+        else if (y >= end.y)
+        {
+            length.y = (y + 1) - end.y;
+            inside = false;
+        }
+        if (inside)
+            return 1;
+
+        return  1 - Mathf.Clamp(((length.magnitude) / L) - extraValue, 0, 1);
+    }
+
+    bool isInsideTexture(int x, int y)
+    {
+        return x >= 0 && y >= 0 && x < mainTexture.width && y < mainTexture.height;
     }
 
     void SaveTexture()
@@ -212,7 +219,7 @@ public class TextureWindow : EditorWindow
     void TextureData(int id)
     {
         GUILayout.BeginArea(new Rect(0, pos + (255 * id) + 295, 255, 255));
-        EditorGUILayout.LabelField("Biome 1");
+        EditorGUILayout.LabelField(biomeName[id]);
         color1[id] = EditorGUILayout.ColorField("Color 1", color1[id]);
         color2[id] = EditorGUILayout.ColorField("Color 2", color2[id]);
         color3[id] = EditorGUILayout.ColorField("Color 3", color3[id]);
@@ -234,7 +241,7 @@ public class TextureWindow : EditorWindow
         {
             for (int j = 0; j < texture[id].width; j++)
             {
-                value = Random.Range(0.0f, limitZ[id]);
+                value = UnityEngine.Random.Range(0.0f, limitZ[id]);
                 if (value < limitX[id])
                     temp = color1[id];
                 else if (value < limitY[id])
