@@ -108,6 +108,7 @@ public class TerrainInfo
         noiseMaxHeight = 2;
         SetHumidityMap();
         SetBiomes();
+        humidityCount--;
     }
 
     void SetBiomes()
@@ -211,26 +212,26 @@ public class TerrainInfo
         return terrainManager.GetNode(faceID, myLevel, myPos, wantedPos);
     }
 
-    public Color GetTemperature(float height, float yPos)
+    public Color GetTemperature(float h, float yPos)
     {
-        yPos = (Mathf.Abs(yPos) * .8f / planetRadius);
-        float v;
-        height = height - planetRadius;
-        if (height < 0)
+        h -= planetRadius;
+        if (h < 0)
             return Color.blue;
-        v = (height * .3f / noiseMaxHeight);
+        yPos = Mathf.Clamp(Mathf.Abs(yPos) * .8f / planetRadius, 0, 1);
+        float v;
+        v = ((h / maxHeight) * .3f);
         v = 1 - (v + yPos);
         return temperatureGradient.Evaluate(v); 
     }
 
     float GetT(float h, float yPos)
     {
-        yPos = (Mathf.Abs(yPos) * .8f / planetRadius);
-        float v;
-        h = h - planetRadius;
+        h -= planetRadius;
         if (h < 0)
             return -1;
-        v = (h * .3f / noiseMaxHeight);
+        yPos = Mathf.Clamp(Mathf.Abs(yPos) * .8f / planetRadius, 0, 1);
+        float v;
+        v = ((h / maxHeight) * .3f);
         v = 1 - (v + yPos);
         return v;
     }
