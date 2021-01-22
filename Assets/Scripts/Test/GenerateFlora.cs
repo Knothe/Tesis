@@ -13,6 +13,9 @@ public class GenerateFlora : MonoBehaviour
 
     void Start()
     {
+        Debug.Log(biomeTrees.scale1);
+        Debug.Log(biomeTrees.scale2);
+
         float time = Time.time;
         treeList = new List<Tree>();
         int treeCount = 0;
@@ -54,7 +57,7 @@ public class GenerateFlora : MonoBehaviour
         t.id = 0;
         if (CalculateColor(pos.x, pos.y, biomeTrees.scale1, biomeTrees.offset1))
             t.id += 1;
-        if (CalculateColor(pos.x, pos.y, biomeTrees.scale1, biomeTrees.offset1))
+        if (CalculateColor(pos.x, pos.y, biomeTrees.scale2, biomeTrees.offset2))
             t.id += 2;
         t.radius = biomeTrees.radius[t.id];
         return t;
@@ -62,9 +65,11 @@ public class GenerateFlora : MonoBehaviour
 
     bool CalculateColor(float x, float y, float scale, Vector2 offset)
     {
+        x += offset.x;
+        y += offset.y;
         x *= scale;
         y *= scale;
-        float sample = Mathf.PerlinNoise(x + offset.x, y + offset.y);
+        float sample = Mathf.PerlinNoise(x, y);
         return sample <.5f;
     }
 
