@@ -475,10 +475,8 @@ public class DualContouringAlgorithm : Algorithm
 
     bool AddCubes(int id, int3x2 thisEdge, ref Node[] neighbors, CubeEdge ce)
     {
-        int3x2 otherEdge = thisEdge;
         List<int3> cubes = new List<int3>();
         List<float4> cPoints = new List<float4>();
-        int3 dif = int3.zero;
 
         if (id < 6)
         {
@@ -538,7 +536,8 @@ public class DualContouringAlgorithm : Algorithm
         temp = TerrainManagerData.RotateSimple(axisID, neighbors[cubeID].data.axisID, otherEdge[1].x, otherEdge[1].z, terrain.chunkDetail + 1);
         otherEdge[1].x = temp.x;
         otherEdge[1].z = temp.y;
-        neighbors[cubeID].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID, points);
+        if (!neighbors[cubeID].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID, points))
+            return;
         for(int i = 0; i < points; i++)
         {
             int cubeIndex = cubes.Count - i - 1;
@@ -566,7 +565,8 @@ public class DualContouringAlgorithm : Algorithm
         otherEdge[1] -= dif;
         dif[otherEdgeData.index.x] += otherEdgeData.dir.x;
         dif[otherEdgeData.index.y] += otherEdgeData.dir.y;
-        neighbors[cubeID].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID, points);
+        if (!neighbors[cubeID].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID, points))
+            return;
         for(int i = 0; i < points; i++)
         {
             int cubeIndex = cubes.Count - i - 1;
@@ -584,34 +584,32 @@ public class DualContouringAlgorithm : Algorithm
         }
     }
 
-    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float4> p, int3 dif, int otherLOD, int otherAxisID, int vertices)
+    public override bool getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float4> p, int3 dif, int otherLOD, int otherAxisID, int vertices)
     {
-        if (edges == null) return;
+        if (edges == null) return false;
         if (level != otherLOD)
-            return;
+            return false;
+        if (!edges.ContainsKey(v))
+            return false;
+        if (edges[v].cubes.Count > 2)
+            return false;
         if (otherAxisID != axisID)
         {
-            if (edges.ContainsKey(v))
+            for (int i = 0; i < vertices && i < edges[v].cubes.Count; i++)
             {
-                for (int i = 0; i < vertices && i < edges[v].cubes.Count; i++)
-                {
-                    c.Add((RotateCube(edges[v].cubes[i], otherAxisID)) + dif);
-                    p.Add(DifFaceSquareToSphere(vertexList[pointsSquare[edges[v].cubes[i]]]));
-                }
+                c.Add((RotateCube(edges[v].cubes[i], otherAxisID)) + dif);
+                p.Add(DifFaceSquareToSphere(vertexList[pointsSquare[edges[v].cubes[i]]]));
             }
-
         }
         else
         {
-            if (edges.ContainsKey(v))
+            for (int i = 0; i < vertices && i < edges[v].cubes.Count; i++)
             {
-                for (int i = 0; i < vertices && i < edges[v].cubes.Count; i++)
-                {
-                    c.Add(edges[v].cubes[i] + dif);
-                    p.Add(SquareToSphere(vertexList[pointsSquare[edges[v].cubes[i]]]));
-                }
+                c.Add(edges[v].cubes[i] + dif);
+                p.Add(SquareToSphere(vertexList[pointsSquare[edges[v].cubes[i]]]));
             }
         }
+        return true;
     }
 
     int3 RotateCube(int3 c, int otherAxisID)

@@ -43,7 +43,8 @@ public class PlayerMovement : MonoBehaviour
         mouseOffset.y += Input.GetAxis("MouseY");
         float magnitude = Mathf.Clamp(mouseOffset.magnitude, 0, movementRadius) / movementRadius;
         mouseRelative = mouseOffset.normalized * magnitude;
-        ui.SetSmallCircle(mouseRelative);
+        if(ui != null)
+            ui.SetSmallCircle(mouseRelative);
         mouseRelative *= sensitivity;
         transform.Rotate(-mouseRelative.y * Time.deltaTime, mouseRelative.x * Time.deltaTime, 0f, Space.Self);
     }

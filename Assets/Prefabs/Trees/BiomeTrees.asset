@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 532fef86d5bc4c440addd65126fa1186, type: 3}
   m_Name: BiomeTrees
   m_EditorClassIdentifier: 
-  scale1: 1
+  scale1: 0.01
   offset1: {x: 100, y: 199}
-  scale2: 0.9
+  scale2: 0.01
   offset2: {x: 0, y: 0}
   trees:
   - {fileID: 7713300705889601364, guid: cdb70f4b7fc08424bbfb9db275fef4d4, type: 3}
@@ -22,7 +22,7 @@ MonoBehaviour:
   - {fileID: 4230234050032360309, guid: 29b28bcdcafb33b4682433329827fdab, type: 3}
   - {fileID: 4828172299432071900, guid: 37e5d03548b08a7459dc8f3541b93bd2, type: 3}
   radius:
+  - 3
+  - 4
   - 5
-  - 7
-  - 9
-  - 11
+  - 6
