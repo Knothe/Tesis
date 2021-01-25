@@ -23,8 +23,8 @@ public class TerrainManager : MonoBehaviour
     private void Update()
     {
         planetData.Update();
-        UpdateVisibleChunks();
         UpdateChunkDetail();
+        UpdateVisibleChunks();
     }
 
     void UpdateChunkDetail()
@@ -33,17 +33,17 @@ public class TerrainManager : MonoBehaviour
         List<Node> remove = new List<Node>();
         int i;
         Node node;
-        foreach(KeyValuePair<int4, Node> key in detailLimitNode)
+        foreach (KeyValuePair<int4, Node> key in detailLimitNode)
         {
             if (!key.Value.isActive)
                 continue;
             i = CheckNodeAvailability(key.Value);
             if (i == 1)
                 IncrementDetail(key.Value, ref remove, ref added);
-            else if(i == 2)
+            else if (i == 2)
             {
                 node = key.Value.parentNode;
-                if(CheckNodeAvailability(node) == 0)
+                if (CheckNodeAvailability(node) == 0)
                 {
                     if (ReduceDetail(node, ref remove))
                     {
@@ -59,12 +59,12 @@ public class TerrainManager : MonoBehaviour
 
         bool isLimit, isLimit2;
         Node neighbor;
-        foreach(Node n in added)
+        foreach (Node n in added)
         {
             faces[n.axisID].GenerateChunk(n);
             n.GenerateMesh2();
             isLimit = false;
-            for(i = 0; i < 6; i++)
+            for (i = 0; i < 6; i++)
             {
                 neighbor = n.neighbors[i];
                 if (neighbor == null)
@@ -147,14 +147,19 @@ public class TerrainManager : MonoBehaviour
         return true;
     }
 
+    void DesactivateChunk(Node node)
+    {
+        node.inGameChunk.Desactivate();
+        faces[node.axisID].DesactivateChunk(node.inGameChunk);
+        node.inGameChunk = null;
+    }
+
     void DesactivateNode(Node node)
     {
         node.isActive = false;
         if (node.inGameChunk == null)
             return;
-        node.inGameChunk.Desactivate();
-        faces[node.axisID].DesactivateChunk(node.inGameChunk);
-        node.inGameChunk = null;
+        DesactivateChunk(node);
     }
 
     void RemoveFromDetailLimit(Node n)
@@ -188,54 +193,76 @@ public class TerrainManager : MonoBehaviour
         if (planetData.showAll)
             return;
         List<Node> changed = new List<Node>();
-        foreach(KeyValuePair<int4, Node> key in updateVisibilityNodes)
+        List<Node> changedLoD = new List<Node>();
+        foreach (KeyValuePair<int4, Node> key in updateVisibilityNodes)
         {
-            if (key.Value.IsVisible())
-            {
-                if(key.Value.inGameChunk == null)
-                {
-                    changed.Add(key.Value);
-                    faces[key.Key.w].GenerateChunk(key.Value);
-                    key.Value.GenerateMesh2();
-                }
-            }
-            else if(key.Value.inGameChunk != null)
-            {
-                changed.Add(key.Value);
-                DesactivateNode(key.Value);
-                key.Value.isActive = true;
-            }
+            if (!key.Value.isActive)
+                changedLoD.Add(key.Value);
+            else
+                CheckNodeChange(key.Value, key.Key, ref changed);
         }
 
-        bool isLimit, isLimit2;
-        foreach(Node node in changed)
+        foreach (Node node in changedLoD)
         {
-            isLimit = false;
-            for(int i = 0; i < 6; i++)
+            RemoveFromUpdateVisibility(node);
+            if (node.parentNode != null && node.parentNode.isActive)
+                CheckNodeChange(node.parentNode, node.parentNode.GetIDValue(), ref changed);
+            else if(node.childs != null)
             {
-                if (node.neighbors[i] == null)
-                    continue;
-                if (node.isVisible == node.neighbors[i].isVisible)
+                RemoveFromUpdateVisibility(node);
+                for (int i = 0; i < 6; i++)
+                    CheckNodeChange(node.childs[i], node.childs[i].GetIDValue(), ref changed);
+            }
+        }
+        foreach(Node node in changed)
+            CheckState(node);
+    }
+
+    void CheckNodeChange(Node n, int4 key, ref List<Node> changed)
+    {
+        if (n.IsVisible())
+        {
+            if (n.inGameChunk == null)
+            {
+                changed.Add(n);
+                faces[key.w].GenerateChunk(n);
+                n.GenerateMesh2();
+            }
+        }
+        else if (n.inGameChunk != null)
+        {
+            changed.Add(n);
+            DesactivateChunk(n);
+        }
+    }
+
+    void CheckState(Node node)
+    {
+        bool isLimit = false;
+        for(int i = 0; i < 6; i++)
+        {
+            if (node.neighbors[i] == null)
+                return;
+            if(node.isVisible == node.neighbors[i].isVisible)
+            {
+                bool isLimit2 = false;
+                for(int j = 0; j < 6; j++)
                 {
-                    isLimit2 = false;
-                    for(int j = 0; j < 6; j++)
+                    if (node.neighbors[i].neighbors[j] == null)
+                        continue;
+                    if(node.isVisible != node.neighbors[i].neighbors[j].isVisible)
                     {
-                        if (node.neighbors[i].neighbors[j] == null)
-                            continue;
-                        if(node.isVisible != node.neighbors[i].neighbors[j].isVisible)
-                        {
-                            isLimit2 = true;
-                            AddToUpdateVisibility(node.neighbors[i].neighbors[j]);
-                        } 
+                        isLimit2 = true;
+                        AddToUpdateVisibility(node.neighbors[i].neighbors[j]);
                     }
-                    if (isLimit2) AddToUpdateVisibility(node.neighbors[i]);
-                    else RemoveFromUpdateVisibility(node.neighbors[i]);
                 }
-                else
-                {
-                    isLimit = true;
-                    AddToUpdateVisibility(node.neighbors[i]);
-                }
+                if (isLimit2) AddToUpdateVisibility(node.neighbors[i]);
+                else RemoveFromUpdateVisibility(node.neighbors[i]);
+            }
+            else
+            {
+                isLimit = true;
+                AddToUpdateVisibility(node.neighbors[i]);
             }
             if (!isLimit)
                 RemoveFromUpdateVisibility(node);
