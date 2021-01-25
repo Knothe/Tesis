@@ -23,8 +23,8 @@ public class TerrainManager : MonoBehaviour
     private void Update()
     {
         planetData.Update();
-        UpdateVisibleChunks();
         UpdateChunkDetail();
+        UpdateVisibleChunks();
     }
 
     void UpdateChunkDetail()
@@ -33,38 +33,23 @@ public class TerrainManager : MonoBehaviour
         List<Node> remove = new List<Node>();
         int i;
         Node node;
-        foreach(KeyValuePair<int4, Node> key in detailLimitNode)
+        foreach (KeyValuePair<int4, Node> key in detailLimitNode)
         {
+            if (!key.Value.isActive)
+                continue;
             i = CheckNodeAvailability(key.Value);
             if (i == 1)
-            {
-                key.Value.GenerateChilds();
-
-                faces[key.Key.w].DesactivateChunk(key.Value);
-                remove.Add(key.Value);
-
-                foreach (Node n in key.Value.childs)
-                {
-                    faces[key.Key.w].GenerateChunk(n);
-                    added.Add(n);
-                }
-                
-            }
-            else if(i == 2)
+                IncrementDetail(key.Value, ref remove, ref added);
+            else if (i == 2)
             {
                 node = key.Value.parentNode;
-                if(CheckNodeAvailability(node) == 0)
+                if (CheckNodeAvailability(node) == 0)
                 {
-                    foreach (Node n in node.childs)
+                    if (ReduceDetail(node, ref remove))
                     {
-                        if (n == null)
-                            continue;
-                        faces[n.axisID].DesactivateChunk(n);
-                        remove.Add(n);
-                        n.isActive = false;
+                        added.Add(node);
+                        node.isActive = true;
                     }
-                    faces[node.axisID].GenerateChunk(node);
-                    added.Add(node);
                 }
             }
         }
@@ -73,40 +58,50 @@ public class TerrainManager : MonoBehaviour
             RemoveFromDetailLimit(n);
 
         bool isLimit, isLimit2;
-        foreach(Node n in added)
+        Node neighbor;
+        foreach (Node n in added)
         {
+            faces[n.axisID].GenerateChunk(n);
             n.GenerateMesh2();
             isLimit = false;
-            for(i = 0; i < 6; i++)
+            for (i = 0; i < 6; i++)
             {
-                if (n.neighbors[i] == null)
+                neighbor = n.neighbors[i];
+                if (neighbor == null)
                     continue;
-                //isLimit = true;
-                else if (n.level == n.neighbors[i].level)
+                else if (n.level == neighbor.level)
                 {
-                    if (!n.neighbors[i].isActive)
+                    if (!neighbor.isActive)
                     {
                         isLimit = true;
-                        for (int j = 0; j < 6; j++)
+                        if (neighbor.childs == null)
                         {
-                            if (n.neighbors[i].childs[j] != null)
-                                AddToDetailLimit(n.neighbors[i].childs[j]);
+                            Debug.Log("Child Error");
+                        }
+                        else
+                        {
+                            for (int j = 0; j < 6; j++)
+                            {
+                                if (neighbor.childs[j] != null)
+                                    AddToDetailLimit(neighbor.childs[j]);
+                            }
                         }
                     }
                     else
                     {
                         isLimit2 = false;
+                        neighbor.SetNeighbors();
                         for (int j = 0; j < 6; j++)
                         {
-                            if (n.neighbors[i].neighbors[j] == null)
+                            if (neighbor.neighbors[j] == null)
                                 continue;
-                            if (n.isVisible != n.neighbors[i].neighbors[j].isVisible)
+                            if (n.isVisible != neighbor.neighbors[j].isVisible)
                             {
                                 isLimit2 = true;
-                                AddToDetailLimit(n.neighbors[i].neighbors[j]);
+                                AddToDetailLimit(neighbor.neighbors[j]);
                             }
-                            if (isLimit2) AddToDetailLimit(n.neighbors[i]);
-                            else AddToDetailLimit(n.neighbors[i]);
+                            if (isLimit2) AddToDetailLimit(neighbor);
+                            else AddToDetailLimit(neighbor);
                         }
                     }
                 }
@@ -122,11 +117,58 @@ public class TerrainManager : MonoBehaviour
 
     }
 
+    void IncrementDetail(Node node, ref List<Node> remove, ref List<Node> added)
+    {
+        DesactivateNode(node);
+        remove.Add(node);
+        node.GenerateChilds();
+        foreach (Node n in node.childs)
+        {
+            added.Add(n);
+            n.isActive = true;
+        }
+    }
+
+    bool ReduceDetail(Node node, ref List<Node> remove)
+    {
+        foreach (Node n in node.childs)
+        {
+            if (!n.isActive)
+                return false;
+            if (CheckNodeAvailability(n) != 2)
+                return false;
+        }
+
+        foreach (Node n in node.childs)
+        {
+            DesactivateNode(n);
+            remove.Add(n);
+        }
+        return true;
+    }
+
+    void DesactivateChunk(Node node)
+    {
+        node.inGameChunk.Desactivate();
+        faces[node.axisID].DesactivateChunk(node.inGameChunk);
+        node.inGameChunk = null;
+    }
+
+    void DesactivateNode(Node node)
+    {
+        node.isActive = false;
+        if (node.inGameChunk == null)
+            return;
+        DesactivateChunk(node);
+    }
+
     void RemoveFromDetailLimit(Node n)
     {
         int4 id = n.GetIDValue();
         if (detailLimitNode.ContainsKey(id))
+        {
             detailLimitNode.Remove(id);
+        }
     }
 
     void AddToDetailLimit(Node n)
@@ -148,54 +190,79 @@ public class TerrainManager : MonoBehaviour
 
     void UpdateVisibleChunks()
     {
+        if (planetData.showAll)
+            return;
         List<Node> changed = new List<Node>();
-        foreach(KeyValuePair<int4, Node> key in updateVisibilityNodes)
+        List<Node> changedLoD = new List<Node>();
+        foreach (KeyValuePair<int4, Node> key in updateVisibilityNodes)
         {
-            if (key.Value.IsVisible())
-            {
-                if(key.Value.inGameChunk == null)
-                {
-                    changed.Add(key.Value);
-                    faces[key.Key.w].GenerateChunk(key.Value);
-                    key.Value.GenerateMesh2();
-                }
-            }
-            else if(key.Value.inGameChunk != null)
-            {
-                changed.Add(key.Value);
-                faces[key.Key.w].DesactivateChunk(key.Value);
-            }
+            if (!key.Value.isActive)
+                changedLoD.Add(key.Value);
+            else
+                CheckNodeChange(key.Value, key.Key, ref changed);
         }
 
-        bool isLimit, isLimit2;
-        foreach(Node node in changed)
+        foreach (Node node in changedLoD)
         {
-            isLimit = false;
-            for(int i = 0; i < 6; i++)
+            RemoveFromUpdateVisibility(node);
+            if (node.parentNode != null && node.parentNode.isActive)
+                CheckNodeChange(node.parentNode, node.parentNode.GetIDValue(), ref changed);
+            else if(node.childs != null)
             {
-                if (node.neighbors[i] == null)
-                    continue;
-                if (node.isVisible == node.neighbors[i].isVisible)
+                RemoveFromUpdateVisibility(node);
+                for (int i = 0; i < 6; i++)
+                    CheckNodeChange(node.childs[i], node.childs[i].GetIDValue(), ref changed);
+            }
+        }
+        foreach(Node node in changed)
+            CheckState(node);
+    }
+
+    void CheckNodeChange(Node n, int4 key, ref List<Node> changed)
+    {
+        if (n.IsVisible())
+        {
+            if (n.inGameChunk == null)
+            {
+                changed.Add(n);
+                faces[key.w].GenerateChunk(n);
+                n.GenerateMesh2();
+            }
+        }
+        else if (n.inGameChunk != null)
+        {
+            changed.Add(n);
+            DesactivateChunk(n);
+        }
+    }
+
+    void CheckState(Node node)
+    {
+        bool isLimit = false;
+        for(int i = 0; i < 6; i++)
+        {
+            if (node.neighbors[i] == null)
+                return;
+            if(node.isVisible == node.neighbors[i].isVisible)
+            {
+                bool isLimit2 = false;
+                for(int j = 0; j < 6; j++)
                 {
-                    isLimit2 = false;
-                    for(int j = 0; j < 6; j++)
+                    if (node.neighbors[i].neighbors[j] == null)
+                        continue;
+                    if(node.isVisible != node.neighbors[i].neighbors[j].isVisible)
                     {
-                        if (node.neighbors[i].neighbors[j] == null)
-                            continue;
-                        if(node.isVisible != node.neighbors[i].neighbors[j].isVisible)
-                        {
-                            isLimit2 = true;
-                            AddToUpdateVisibility(node.neighbors[i].neighbors[j]);
-                        } 
+                        isLimit2 = true;
+                        AddToUpdateVisibility(node.neighbors[i].neighbors[j]);
                     }
-                    if (isLimit2) AddToUpdateVisibility(node.neighbors[i]);
-                    else RemoveFromUpdateVisibility(node.neighbors[i]);
                 }
-                else
-                {
-                    isLimit = true;
-                    AddToUpdateVisibility(node.neighbors[i]);
-                }
+                if (isLimit2) AddToUpdateVisibility(node.neighbors[i]);
+                else RemoveFromUpdateVisibility(node.neighbors[i]);
+            }
+            else
+            {
+                isLimit = true;
+                AddToUpdateVisibility(node.neighbors[i]);
             }
             if (!isLimit)
                 RemoveFromUpdateVisibility(node);
@@ -239,7 +306,6 @@ public class TerrainManager : MonoBehaviour
 
     public void GenerateTerrain()
     {
-        
         float time = Time.realtimeSinceStartup;
         DeleteAllChilds();
         planetData.InstantiateNoise();
@@ -519,7 +585,6 @@ public class Area
     // 2
     // 3
     // 4
-    int triangle;
     public float2 limit1 { get; private set; }
     public float2 limit2 { get; private set; }
 
@@ -527,7 +592,6 @@ public class Area
     {
         limit1 = new float2(l1x, l1y);
         limit2 = new float2(l2x, l2y);
-        triangle = 0;
     }
 
 }

@@ -14,6 +14,8 @@ public class Chunk : MonoBehaviour
     public int chunkListIndex { get; set; }
     public Node data { get; private set; }
 
+    bool isLast;
+
     public void Initialize(Node d, Material m)
     {
         data = d;
@@ -21,8 +23,14 @@ public class Chunk : MonoBehaviour
         meshCollider = gameObject.GetComponent<MeshCollider>();
         gameObject.GetComponent<MeshRenderer>().material = m;
         gameObject.SetActive(true);
+        isLast = d.level == d.data.terrain.levelsOfDetail - 1;
         //gameObject.GetComponent<MeshRenderer>().material.color = Color.white;
         //chunkListIndex = index;
+    }
+
+    public void Desactivate()
+    {
+        gameObject.SetActive(false);
     }
 
     public bool UpdateChunkData()
@@ -34,12 +42,19 @@ public class Chunk : MonoBehaviour
     {
         if (data.data.terrain.drawAsSphere)
             //gameObject.transform.localPosition = data.cubePosition;
-            gameObject.transform.localPosition = Vector3.zero;
+            gameObject.transform.localPosition = data.data.chunkCenter;
         else
             gameObject.transform.localPosition = data.cubePosition;
         gameObject.transform.localRotation = Quaternion.identity;
         spherePosition = data.faceLocation;
         meshFilter.sharedMesh = m;
+        if (isLast)
+        {
+            meshCollider.sharedMesh = m;
+            meshCollider.enabled = true;
+        }
+        else
+            meshCollider.enabled = false;
     }
 
     public void IsLimit()

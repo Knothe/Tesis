@@ -66,8 +66,6 @@ public class Face
             node.GenerateMesh2();
             Node n;
             int4 k, key = node.GetIDValue();
-            if (node.faceLocation.x == 32 && node.faceLocation.y == 42 && node.faceLocation.z == -2)
-                k = int4.zero;
             for(int i = 0; i < 6; i++)
             {
                 n = node.neighbors[i];
@@ -86,8 +84,6 @@ public class Face
                 else if (!detailLimitNode.ContainsKey(key) && (n.level != node.level || !n.isActive))
                 {
                     detailLimitNode.Add(key, node);
-                    if (node.inGameChunk != null)
-                        node.inGameChunk.IsLimit();
                 }
             }
         }
@@ -121,6 +117,7 @@ public class Face
         {
             if (activeNodes != null)
                 activeNodes.Add(n);
+
             if (n.GenerateVoxelData() && n.inGameChunk == null)
             {
                 GameObject g;
@@ -129,6 +126,7 @@ public class Face
                 {
                     c = inactiveChunks[0];
                     g = c.gameObject;
+                    g.SetActive(true);
                     inactiveChunks.RemoveAt(0);
                 }
                 else
@@ -136,21 +134,26 @@ public class Face
                     g = new GameObject("chunk: " + n.faceLocation, typeof(MeshRenderer), typeof(MeshFilter), typeof(MeshCollider), typeof(Chunk));
                     c = g.GetComponent<Chunk>();
                 }
-
                 g.transform.parent = parent;
                 c.Initialize(n, mat);
                 n.SetChunk(c);
             }
         }
+        n.isActive = true;
+    }
+
+    public void DesactivateChunk(Chunk c)
+    {
+        inactiveChunks.Add(c);
     }
 
     public void DesactivateChunk(Node n)
     {
+        n.isActive = false;
         if (n.inGameChunk == null)
             return;
-        Chunk c = n.inGameChunk;
-        c.gameObject.SetActive(false);
-        inactiveChunks.Add(c);
+        n.inGameChunk.Desactivate();
+        inactiveChunks.Add(n.inGameChunk);
         n.inGameChunk = null;
     }
 
@@ -180,8 +183,21 @@ public class Face
         Node temp = null;
         if (detailList.ContainsKey(t))
             temp = detailList[t];
-        while(temp != null && !temp.isActive && temp.level != myLevel)
+        while(true)
         {
+            if (temp == null)
+                break;
+            if (temp.level == myLevel && !temp.isActive)
+            {
+                if (temp.childs == null)
+                {
+                    //Debug.Log(myPos + ", " + wantedPos);
+                }
+                break;
+            }
+            if (temp.isActive)
+                break;
+
             reescale = (terrain.levelsOfDetail - 2) - temp.level;
             temp = GetChilds(temp, wantedPos, terrain.reescaleValues[reescale]);
         }

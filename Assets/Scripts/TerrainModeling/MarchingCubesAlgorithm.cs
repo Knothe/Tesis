@@ -81,6 +81,7 @@ public class MarchingCubesAlgorithm : Algorithm
         Vector3 temp, newVertex;
         List<Vector3> newVertexList = new List<Vector3>();
         colors.Clear();
+        chunkCenter = Vector3.zero;
         for (int i = 0; i < vertexList.Count; i++)
         {
             temp = vertexList[i] + (Vector3)center;
@@ -99,8 +100,13 @@ public class MarchingCubesAlgorithm : Algorithm
                 else
                     colors.Add(terrain.GetTemperature(height, newVertex.y));
             }
-            
+            chunkCenter += newVertex;
             newVertexList.Add(newVertex);
+        }
+        chunkCenter /= newVertexList.Count;
+        for(int i = 0; i < newVertexList.Count; i++)
+        {
+            newVertexList[i] -= chunkCenter;
         }
         return newVertexList;
     }
@@ -160,9 +166,9 @@ public class MarchingCubesAlgorithm : Algorithm
         return p1 + p;
     }
     
-    public override void getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float4> p, int3 dif, int otherLOD, int otherAxisID, int vertices)
+    public override bool getEdgeCubes(int3x2 v, ref List<int3> c, ref List<float4> p, int3 dif, int otherLOD, int otherAxisID, int vertices)
     {
-
+        return false;
     }
 
 }

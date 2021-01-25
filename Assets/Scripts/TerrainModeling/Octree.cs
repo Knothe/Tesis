@@ -46,7 +46,7 @@ public class Node
 
         spherePosition = CubeToSphere(cubePosition);
         sphereCenter = CubeToSphere(center);
-        isActive = false;
+        isActive = true;
     }
 
     float3 CubeToSphere(float3 cubePoint)
@@ -80,7 +80,6 @@ public class Node
 
     public bool GenerateVoxelData()
     {
-        isActive = true;
         //if (IsVisible())
         //    return false;
         return data.GenerateVoxelData(cubePosition);
@@ -101,11 +100,16 @@ public class Node
 
     public void GenerateMesh2() // Cambiar nombre
     {
+        SetNeighbors();
+        if (inGameChunk != null)
+            inGameChunk.SetMesh(data.GenerateMesh(cubePosition, neighbors));
+    }
+
+    public void SetNeighbors()
+    {
         int reescale = data.terrain.reescaleValues[(data.terrain.levelsOfDetail - 1) - level];
         for (int i = 0; i < neighbors.Length; i++)
             neighbors[i] = data.terrain.GetNode(axisID, level, faceLocation, faceLocation + (TerrainManagerData.neigborCells[i] * reescale));
-        if (inGameChunk != null)
-            inGameChunk.SetMesh(data.GenerateMesh(cubePosition, neighbors));
     }
 
     public int IsDivision()
@@ -119,9 +123,7 @@ public class Node
                 else if (!n.IsVisible())
                     return 2;   // Divide prendido y apagado
             }
-                
         }
-            
         return 0; // No es división
     }
 
@@ -133,11 +135,13 @@ public class Node
 
     public void GenerateChilds()
     {
-        isActive = false;
         if (childs != null)
             return;
+        isActive = false;
         childs = new Node[8];
         int newLevel = level + 1;
+        if (data.terrain.levelsOfDetail == newLevel)
+            return;
         //int3 t = TerrainManagerData.dirMult[axisID];
         int reescale = data.terrain.reescaleValues[(data.terrain.levelsOfDetail - 1) - newLevel];
         float3 middlePoint = new float3(.5f, .5f, .5f) * reescale;
