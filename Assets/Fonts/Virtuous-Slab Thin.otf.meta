@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 33ae161b7f2449f469d076c5df5e9b7f
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Virtuous Slab
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 81412c9e94c7e684395a65bff16a92df, type: 3}
+  - {fileID: 12800000, guid: ef3596ffb46acd54b94a51c010adf7ce, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

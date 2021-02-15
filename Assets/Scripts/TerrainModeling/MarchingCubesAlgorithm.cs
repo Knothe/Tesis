@@ -88,27 +88,31 @@ public class MarchingCubesAlgorithm : Algorithm
             height = Mathf.Abs(temp[TerrainManagerData.axisIndex[axisID].z]);
             temp[TerrainManagerData.axisIndex[axisID].z] = terrain.planetRadius * TerrainManagerData.dirMult[axisID].z;
             newVertex = temp.normalized * height;
-
-            if (terrain.showBiome)
-            {
-                colors.Add(terrain.GetBiome(axisID, height, newVertex.y, temp));
-            }
-            else
-            {
-                if (!terrain.showTemperature)
-                    colors.Add(terrain.GetHumidity(axisID, temp));
-                else
-                    colors.Add(terrain.GetTemperature(height, newVertex.y));
-            }
+            SetVertexBiome(height, newVertex.y, temp);
             chunkCenter += newVertex;
             newVertexList.Add(newVertex);
         }
         chunkCenter /= newVertexList.Count;
         for(int i = 0; i < newVertexList.Count; i++)
-        {
             newVertexList[i] -= chunkCenter;
-        }
         return newVertexList;
+    }
+
+    void SetVertexBiome(float h, float y, Vector3 temp)
+    {
+        if (terrain.showBiome)
+        {
+            int b = terrain.GetBiomeNumber(axisID, h, y, temp);
+            biome.Add(b);
+            colors.Add(terrain.GetPointColor(b));
+        }
+        else
+        {
+            if (!terrain.showTemperature)
+                colors.Add(terrain.GetHumidity(axisID, temp));
+            else
+                colors.Add(terrain.GetTemperature(h, y));
+        }
     }
 
     void ApplyMarchingCube()

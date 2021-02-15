@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 532fef86d5bc4c440addd65126fa1186, type: 3}
+  m_Name: Biome 9
+  m_EditorClassIdentifier: 
+  tree1:
+    treePrefabs:
+    - {fileID: 9215403558085393471, guid: 692ae8b5bb79e3c4fb56369caf847d1f, type: 3}
+    radius: 20
+  tree2:
+    treePrefabs:
+    - {fileID: 1496635251058145420, guid: f0f934f5b8eaf2e4b9f32e4b576151e9, type: 3}
+    radius: 20
+  tree3:
+    treePrefabs:
+    - {fileID: 846942307101682232, guid: 00dbba7e7a9202f408439a8e5618ab0b, type: 3}
+    radius: 20
+  tree4:
+    treePrefabs:
+    - {fileID: 7315030820780938481, guid: 39ea5ed2090a50a408769226b69d92a8, type: 3}
+    radius: 20

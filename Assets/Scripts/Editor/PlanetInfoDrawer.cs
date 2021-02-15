@@ -9,7 +9,7 @@ public class PlanetInfoDrawer : PropertyDrawer
 {
     Rect r = Rect.zero;
     bool general, noise, climate, debug, chunk;
-    SerializedProperty[] t = new SerializedProperty[21];
+    SerializedProperty[] t = new SerializedProperty[23];
     /*  General data:
      *      Radius                          0
      *      max Height                      1
@@ -62,6 +62,8 @@ public class PlanetInfoDrawer : PropertyDrawer
         t[18] = property.FindPropertyRelative("showBiome");
         t[19] = property.FindPropertyRelative("biomeColors");
         t[20] = property.FindPropertyRelative("useColors");
+        t[21] = property.FindPropertyRelative("treeSet");
+        t[22] = property.FindPropertyRelative("instantiateTrees");
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -142,6 +144,8 @@ public class PlanetInfoDrawer : PropertyDrawer
             }
 
             t[14].intValue = EditorGUILayout.IntSlider(new GUIContent("Number of biomes"), t[14].intValue, 1, 9);
+            t[22].boolValue = EditorGUILayout.Toggle(new GUIContent("Instantiate Trees"), t[22].boolValue);
+            EditorGUILayout.PropertyField(t[21]);
             EditorGUI.indentLevel--;
         }
         debug = EditorGUILayout.Foldout(debug, "Debug");

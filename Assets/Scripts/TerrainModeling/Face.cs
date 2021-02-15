@@ -5,27 +5,20 @@ using UnityEngine;
 
 public class Face
 {
-    Transform parent;
+    public Transform parent { get; private set; }
     int axisID;
     TerrainInfo terrain;
 
-    public List<Chunk> activeChunks;
-    public List<Chunk> inactiveChunks;
-    public List<Chunk> updateableChunks;
+    public List<Chunk> inactiveChunks { get; set; }
 
-    public List<Node> activeNodes;
+    public List<Node> activeNodes { get; set; }
 
-    Dictionary<int3, Node> detailList;
-
-    Material mat;
+    Dictionary<int3, Node> detailList { get; set; }
 
     public Face(int a, TerrainInfo t, Transform p)
     {
         terrain = t;
         axisID = a;
-        activeChunks = new List<Chunk>();
-        inactiveChunks = new List<Chunk>();
-        updateableChunks = new List<Chunk>();
         activeNodes = new List<Node>();
         detailList = new Dictionary<int3, Node>();
         GameObject g = new GameObject("Face" + axisID);
@@ -35,10 +28,8 @@ public class Face
         parent = g.transform;
     }
 
-    public void GenerateChunks(Material m, int chunkHeight)
+    public void GenerateChunks(Material m, int chunkHeight)     // Cambiar
     {
-        mat = m;
-        activeChunks.Clear();
         int resolution = terrain.minChunkPerFace;
         if (resolution <= 0)
             return;
@@ -59,21 +50,20 @@ public class Face
         }
     }
 
-    public void GenerateMesh(ref Dictionary<int4, Node> visibilityLimitNodes, ref Dictionary<int4, Node> detailLimitNode)
+    public void GenerateMesh(ref Dictionary<int4, Node> visibilityLimitNodes, ref Dictionary<int4, Node> detailLimitNode, ref Dictionary<int4, Node> biggestDetailList)
     {
         foreach(Node node in activeNodes)
         {
-            node.GenerateMesh2();
+            node.GenerateMesh();
             Node n;
             int4 k, key = node.GetIDValue();
             for(int i = 0; i < 6; i++)
             {
                 n = node.neighbors[i];
                 if (n == null)
-                {
                     continue;
-                }
-                else if (!n.IsVisible())
+                
+                if (!n.IsVisible())
                 {
                     k = n.GetIDValue();
                     if (!visibilityLimitNodes.ContainsKey(key))
@@ -82,11 +72,15 @@ public class Face
                         visibilityLimitNodes.Add(k, n);
                 }
                 else if (!detailLimitNode.ContainsKey(key) && (n.level != node.level || !n.isActive))
-                {
                     detailLimitNode.Add(key, node);
-                }
             }
+
+            if(node.inGameChunk != null)
+                if(node.level == terrain.levelsOfDetail - 1)
+                    if(!biggestDetailList.ContainsKey(key))
+                        biggestDetailList.Add(key, node);
         }
+        
         activeNodes = null;
     }
 
@@ -113,38 +107,9 @@ public class Face
 
     public void GenerateChunk(Node n)
     {
-        if (n.IsVisible())
-        {
+        if(terrain.terrainManager.GenerateChunk(this, n))
             if (activeNodes != null)
                 activeNodes.Add(n);
-
-            if (n.GenerateVoxelData() && n.inGameChunk == null)
-            {
-                GameObject g;
-                Chunk c;
-                if (inactiveChunks.Count > 0)
-                {
-                    c = inactiveChunks[0];
-                    g = c.gameObject;
-                    g.SetActive(true);
-                    inactiveChunks.RemoveAt(0);
-                }
-                else
-                {
-                    g = new GameObject("chunk: " + n.faceLocation, typeof(MeshRenderer), typeof(MeshFilter), typeof(MeshCollider), typeof(Chunk));
-                    c = g.GetComponent<Chunk>();
-                }
-                g.transform.parent = parent;
-                c.Initialize(n, mat);
-                n.SetChunk(c);
-            }
-        }
-        n.isActive = true;
-    }
-
-    public void DesactivateChunk(Chunk c)
-    {
-        inactiveChunks.Add(c);
     }
 
     public void DesactivateChunk(Node n)

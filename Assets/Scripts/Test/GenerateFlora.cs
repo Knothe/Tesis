@@ -3,11 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// Class is currently useless
 public class GenerateFlora : MonoBehaviour
 {
+ /*   
     public float squareSize;
 
-    public BiomeTrees biomeTrees;
+    public TreeSets biomeTrees;
 
     List<Tree> treeList;
 
@@ -20,7 +22,7 @@ public class GenerateFlora : MonoBehaviour
         treeList = new List<Tree>();
         int treeCount = 0;
         int notCreatedCount = 0;
-        int maxTrees = (int)((squareSize * squareSize) / biomeTrees.radius[0]);
+        int maxTrees = (int)((squareSize * squareSize));
         Vector2 position = Vector2.zero;
         Tree t;
         float newSize = squareSize / 2;
@@ -59,7 +61,8 @@ public class GenerateFlora : MonoBehaviour
             t.id += 1;
         if (CalculateColor(pos.x, pos.y, biomeTrees.scale2, biomeTrees.offset2))
             t.id += 2;
-        t.radius = biomeTrees.radius[t.id];
+        //t.radius = biomeTrees.radius[t.id];
+        t.radius = 2;
         return t;
     }
 
@@ -84,13 +87,6 @@ public class GenerateFlora : MonoBehaviour
         }
         return true;
     }
+    */
 }
 
-
-public struct Tree
-{
-    public int biome;
-    public int id;
-    public Vector2 position;
-    public float radius;
-}

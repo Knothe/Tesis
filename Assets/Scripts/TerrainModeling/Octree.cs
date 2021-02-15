@@ -1,4 +1,5 @@
-﻿using Unity.Mathematics;
+﻿using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class Node
@@ -21,7 +22,7 @@ public class Node
     public bool isActive { get; set; }
     public Chunk inGameChunk { get; set; }
     public bool isVisible { get; private set; }
-
+    List<TreeData> treeData { get; set; }
 
     public Node(Node p, int l, int axis, int3 pos, float3 middlePos,TerrainInfo t, int cp)
     {
@@ -43,6 +44,8 @@ public class Node
         temp[TerrainManagerData.axisIndex[axis][1]] = middlePos.y * t.resolutionVectors[axisID].y;
         temp[TerrainManagerData.axisIndex[axis][2]] = middlePos.z * t.resolutionVectors[axisID].z;
         center = t.faceStart[axisID] + temp;
+
+        treeData = null;
 
         spherePosition = CubeToSphere(cubePosition);
         sphereCenter = CubeToSphere(center);
@@ -80,8 +83,6 @@ public class Node
 
     public bool GenerateVoxelData()
     {
-        //if (IsVisible())
-        //    return false;
         return data.GenerateVoxelData(cubePosition);
     }
 
@@ -98,10 +99,20 @@ public class Node
         return isVisible; // sqrt(2)
     }
 
-    public void GenerateMesh2() // Cambiar nombre
+    public void GenerateMesh() // Cambiar nombre
     {
         SetNeighbors();
-        if (inGameChunk != null)
+        if (inGameChunk == null)
+            return;
+        if(data.terrain.levelsOfDetail == level + 1)
+        {
+            if(treeData == null)
+            {
+                //data.terrain.ActivateTrees(faceLocation, axisID, cubePosition);
+            }
+            inGameChunk.SetMesh(treeData, data.GenerateMesh(cubePosition, neighbors));
+        }
+        else
             inGameChunk.SetMesh(data.GenerateMesh(cubePosition, neighbors));
     }
 
@@ -163,7 +174,6 @@ public class Node
 
     public int4 GetIDValue()
     {
-        //return new int4((int3)cubePosition, axisID);
         return new int4(faceLocation, axisID);
     }
 
