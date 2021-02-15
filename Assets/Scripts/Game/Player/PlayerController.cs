@@ -42,6 +42,9 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (Time.timeScale == 0)
+            return;
+
         currentPlanet.Attract(transform, rb);
         Rotate();
         CheckGrounded();

@@ -58,6 +58,9 @@ public class ShipController : MonoBehaviour
 
     private void Update()
     {
+        if (Time.timeScale == 0)
+            return;
+
         if (state == ShipState.Fly)
             FlyState();
         else if(state == ShipState.Landing)

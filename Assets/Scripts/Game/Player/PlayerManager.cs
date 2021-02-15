@@ -39,11 +39,12 @@ public class PlayerManager : MonoBehaviour
 {
     public PlayerController onPlanet;
     public ShipController onSpace;
+    public GameObject pauseMenu;
 
     PlanetaryBody currentPlanet;
 
     int[] obtenibles = new int[20];
-
+    bool isPaused = false;
 
     void Start()
     {
@@ -52,11 +53,20 @@ public class PlayerManager : MonoBehaviour
         onSpace.CustomStart(this);
         currentPlanet = null;
         EnterShip();
+        pauseMenu.SetActive(false);
     }
 
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            isPaused = !isPaused;
+            if (isPaused)
+                Time.timeScale = 0;
+            else
+                Time.timeScale = 1;
+            pauseMenu.SetActive(isPaused);
+        }
     }
 
     public void EnteredPlanet(PlanetaryBody planet)
