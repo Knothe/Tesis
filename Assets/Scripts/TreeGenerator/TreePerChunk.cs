@@ -9,6 +9,7 @@ public class TreePerChunk
     public int activatedChunks { get; set; }
     public Vector3 center { get; private set; }
     public Transform inGameHolder { get; set; }
+    public bool positionSet { get; set; }
 
     public TreePerChunk()
     {
@@ -16,6 +17,7 @@ public class TreePerChunk
         activatedChunks = 0;
         treeDataList = new List<TreeData>();
         center = Vector3.zero;
+        positionSet = false;
     }
 
     public void AddTree(TreeData t)
@@ -24,17 +26,15 @@ public class TreePerChunk
         center += t.spherePos;
     }
 
-    
-
     public void SetCenter()
     {
         return;
-        Vector3 c = Vector3.zero;
-        foreach (TreeData td in treeDataList)
-            c += td.spherePos;
-        center = c / treeDataList.Count;
-        foreach (TreeData td in treeDataList)
-            td.spherePos -= c;
+        //Vector3 c;
+        //foreach (TreeData td in treeDataList)
+        //    c += td.spherePos;
+        //center = c / treeDataList.Count;
+        //foreach (TreeData td in treeDataList)
+        //    td.spherePos -= c;
     }
 }
 

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SpaceShipUI : MonoBehaviour
 {
@@ -13,6 +14,9 @@ public class SpaceShipUI : MonoBehaviour
     [SerializeField] Transform smallCircle;
     [SerializeField] GameObject canLandText;
     [SerializeField] float radius;
+    [SerializeField] Text life;
+    [SerializeField] Color filterUpgradeColor;
+    [SerializeField] Image bg;
 
     Vector3 temp = Vector3.zero;
 
@@ -21,6 +25,11 @@ public class SpaceShipUI : MonoBehaviour
         DesactivateAll();
         flying.SetActive(true);
         canLandText.SetActive(false);
+    }
+
+    public void SetLife(int l)
+    {
+        life.text = l.ToString();
     }
 
     public void CanLand(bool b)
@@ -58,5 +67,10 @@ public class SpaceShipUI : MonoBehaviour
             landing.SetActive(true);
         else if (state == ShipState.Launching)
             launching.SetActive(true);
+    }
+
+    public void UpgradeColor()
+    {
+        bg.color = filterUpgradeColor;
     }
 }

@@ -7,21 +7,21 @@ using UnityEngine;
     Game Pauses from here
 
     Lista de obtenibles:
-        0   Madera 1
-        1   Madera 2
-        2   Madera 3
-        3   Madera 4
-        4   Metal 1
-        5   Metal 2
-        6   Metal 3
-        7   Metal 4
+        0   Madera Roja
+        1   Madera Café
+        2   Madera Obscura
+        3   Madera Blanca
+        4   Metal Marrón
+        5   Metal Claro
+        6   Metal Obscuro
+        7   Metal Rojo
         8   Agua
         9   Leche
         10  Jugo
-        11  Resina 1
-        12  Resina 2
-        13  Resina 3
-        14  Resina 4
+        11  Resina Amarilla
+        12  Resina Naranja
+        13  Resina Verde
+        14  Resina Gris
         15  Hule
         16  Vidrio
         17  Manzana
@@ -39,12 +39,22 @@ public class PlayerManager : MonoBehaviour
 {
     public PlayerController onPlanet;
     public ShipController onSpace;
-    public GameObject pauseMenu;
+    public PauseMenuManager pauseManager;
+
+    public int minRandomMission;
+    public int maxRandomMission;
+    public int lifeRecovery;
 
     PlanetaryBody currentPlanet;
+    GameManager gameManager;
 
-    int[] obtenibles = new int[20];
+    public int[] obtenibles { get; private set; }
     bool isPaused = false;
+
+    public Mission recoverHealth { get; private set; }
+    public Mission recoverCrash { get; private set; }
+
+    int[] materiales = new int[] { 1, 2, 5, 10 };
 
     void Start()
     {
@@ -53,27 +63,65 @@ public class PlayerManager : MonoBehaviour
         onSpace.CustomStart(this);
         currentPlanet = null;
         EnterShip();
-        pauseMenu.SetActive(false);
+        onSpace.StartRigidBody();
+        pauseManager.gameObject.SetActive(false);
+        SetHealthMission();
+    }
+
+    public void SetGameManager(GameManager g)
+    {
+        gameManager = g;
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.R))
         {
+            Cursor.visible = !Cursor.visible;
             isPaused = !isPaused;
+            pauseManager.gameObject.SetActive(isPaused);
             if (isPaused)
+            {
                 Time.timeScale = 0;
+                pauseManager.StartMenu();
+            }
             else
                 Time.timeScale = 1;
-            pauseMenu.SetActive(isPaused);
+        }
+    }
+
+    public void ShipCrashed()
+    {
+        recoverCrash = new Mission("Arreglar accidente", 3);
+        SetMission(recoverCrash);
+    }
+
+    void SetHealthMission()
+    {
+        recoverHealth = new Mission("Recuperar salud", 3);
+        SetMission(recoverHealth);
+    }
+
+    void SetMission(Mission m)
+    {
+        int rand = Random.Range(0, 4);
+        int index = 0;
+        for (int i = 0; i < 4; i++)
+        {
+            if (rand != i)
+            {
+                m.item[index] = materiales[i];
+                m.quantity[index] = Random.Range(minRandomMission, maxRandomMission);
+                index++;
+            }
         }
     }
 
     public void EnteredPlanet(PlanetaryBody planet)
     {
-        Debug.Log("Entered");
         currentPlanet = planet;
         onSpace.SetCurrentPlanet(currentPlanet);
+        Debug.Log("Entered");
     }
 
     public void ExitedPlanet(PlanetaryBody planet)
@@ -84,6 +132,22 @@ public class PlayerManager : MonoBehaviour
             onSpace.DesactivatePlanet();
             Debug.Log("Exited");
         }
+    }
+
+    public void CollectedItem(int id)
+    {
+        obtenibles[id]++;
+    }
+
+    public float CalculatePlayerShipAngle()
+    {
+        Plane plane = new Plane(onPlanet.transform.up, onPlanet.transform.position);
+        Vector3 closestPoint = plane.ClosestPointOnPlane(onSpace.transform.position);
+
+        Debug.DrawLine(onSpace.transform.position, closestPoint, Color.red);
+        Debug.DrawLine(onPlanet.transform.position, closestPoint, Color.cyan);
+
+        return -1 * Vector3.SignedAngle(onPlanet.transform.forward, closestPoint - onPlanet.transform.position, onPlanet.transform.up);
     }
 
     public void ExitShip()
@@ -98,17 +162,67 @@ public class PlayerManager : MonoBehaviour
         onPlanet.currentPlanet = currentPlanet;
         transform.parent = onPlanet.gameObject.transform;
         transform.localPosition = Vector3.zero;
-
     }
 
     public void EnterShip()
     {
         onSpace.enabled = true;
-        onSpace.shipCam.SetActive(true);
-        onSpace.ui.gameObject.SetActive(true);
         onPlanet.gameObject.SetActive(false);
         onPlanet.ui.gameObject.SetActive(false);
+        onSpace.Reactivate();
         transform.parent = onSpace.gameObject.transform;
         transform.localPosition = Vector3.zero;
+    }
+
+    public void ClearMission(int id, bool cleared)
+    {
+        if (cleared)
+            gameManager.FinishGame(true);
+
+        if(id == 0)                     // Cambiar color UI nave
+        {
+            onSpace.ChangeTexture(3);
+            onSpace.Upgrade(0);
+        }
+        else if(id == 1)                // Mejor aceleración
+        {
+            onSpace.Upgrade(4);
+        }
+        else if (id == 3)               // Mayor velocidad
+        {
+            onSpace.ChangeTexture(2);
+            onSpace.Upgrade(1);
+        }
+        else if (id == 5)               // Menor daño contra choques
+        {
+            onSpace.ChangeTexture(0);
+            onSpace.Upgrade(2);
+        }
+        else if (id == 6)               // Menor daño contra asteroides y árboles
+        {
+            onSpace.ChangeTexture(1);
+            onSpace.Upgrade(3);
+        }
+        else if (id == 7)
+        {
+            onSpace.ModifyLife(lifeRecovery);
+            for (int i = 0; i < recoverHealth.item.Length; i++)
+                obtenibles[recoverHealth.item[i]] -= recoverHealth.quantity[i];
+            SetMission(recoverHealth);
+        }
+        else if (id == 8)
+        {
+            onSpace.RepairCrash();
+            for (int i = 0; i < recoverCrash.item.Length; i++)
+                obtenibles[recoverCrash.item[i]] -= recoverCrash.quantity[i];
+            recoverCrash = null;
+        }
+
+        pauseManager.StartMenu();
+    }
+
+    public void PlayerDeath()
+    {
+        gameManager.FinishGame(false);
     }
 }

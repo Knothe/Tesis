@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
@@ -6,10 +6,11 @@ using Unity.Mathematics;
 [RequireComponent(typeof(TerrainManager))]
 public class PlanetaryBody : MonoBehaviour
 {
-    public float gravityValue = -10;
-    public float2 spaceShipRotation; // x -> min, y -> max
-    public PlayerManager player;
+    public float gravityValue = 10;
+    public float2 spaceShipRotation = new float2(.001f, 1.5f); // x -> min, y -> max
+    public Vector3 rotation;
 
+    PlayerManager player;
     float dif;
     bool isInside;
     float gravityEffectStart;
@@ -21,34 +22,42 @@ public class PlanetaryBody : MonoBehaviour
         isInside = false;
         TerrainManager terrain = gameObject.GetComponent<TerrainManager>();
         gravityEffectStart = terrain.planetData.planetRadius + (3 * terrain.planetData.maxHeight);
-        Debug.Log("Gravity: " + gravityEffectStart);
         gravityDiv = 2 * terrain.planetData.maxHeight;
         mod = 0;
+        player = terrain.planetData.player.gameObject.GetComponent<PlayerManager>();
     }
 
     private void Update()
     {
+        gameObject.transform.Rotate(rotation, Space.World);
         dif = gravityEffectStart - (transform.position - player.transform.position).magnitude;
 
         if (dif <= 0)
         {
             if (isInside)
-            {
-                isInside = false;
-                mod = 0;
-                player.ExitedPlanet(this);
-            }
+                ExitedPlanet();
         }
         else
         {
             if (!isInside)
-            {
-                isInside = true;
-                player.EnteredPlanet(this);
-            }
+                EnteredPlanet();
             mod = Mathf.Clamp(dif, 0, gravityDiv) / gravityDiv;
             
         }
+    }
+
+    void EnteredPlanet()
+    {
+        isInside = true;
+        player.EnteredPlanet(this);
+    }
+
+    void ExitedPlanet()
+    {
+        isInside = false;
+        mod = 0;
+        player.ExitedPlanet(this);
+
     }
 
     public float Rotate(Transform t)

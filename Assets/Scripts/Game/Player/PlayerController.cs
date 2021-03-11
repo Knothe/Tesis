@@ -9,12 +9,18 @@ public class PlayerController : MonoBehaviour
     public float jumpForce;
     public float moveSpeed;
     public float mouseSensitivity;
+    public float shootDistance;
+    public float damage = 5;
     // gravity Value
     public Transform groundCheck;
     public float groundDistance = .4f;
     public LayerMask groundMask;    // Maybe change to only ignore player
     public Transform cam;
     public OnPlanetUI ui;
+    public Transform weapon;
+    public LayerMask treeMask;
+    public LineRenderer shootRenderer;
+    public ParticleSystem particle;
 
     public PlanetaryBody currentPlanet { get; set; }
     PlayerManager playerManager;
@@ -28,7 +34,6 @@ public class PlayerController : MonoBehaviour
     bool isGrounded;
     bool nearShip;
 
-
     public void CustomStart(PlayerManager manager)
     {
         playerManager = manager;
@@ -38,6 +43,7 @@ public class PlayerController : MonoBehaviour
         jump = false;
         moveDir = Vector3.zero;
         nearShip = false;
+        particle.gameObject.SetActive(false);
     }
 
     private void Update()
@@ -51,11 +57,40 @@ public class PlayerController : MonoBehaviour
         moveDir.x = Input.GetAxisRaw("Horizontal");
         moveDir.z = Input.GetAxisRaw("Vertical");
         moveDir.Normalize();
+        Shoot();
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
             jump = true;
         if (nearShip)
             if (Input.GetKeyDown(KeyCode.Q))
                 playerManager.EnterShip();
+
+        ui.SetShipLocator(playerManager.CalculatePlayerShipAngle());
+    }
+
+    void Shoot()
+    {
+        RaycastHit hit;
+        shootRenderer.SetPosition(0, weapon.transform.position);
+        if (Physics.Raycast(weapon.transform.position, weapon.transform.forward, out hit, shootDistance, treeMask))
+        {
+            shootRenderer.SetPosition(1, hit.point);
+            if (Input.GetKey(KeyCode.E))
+            {
+                hit.collider.transform.gameObject.GetComponent<Tree>().DealDamage(damage);
+                if (!particle.gameObject.activeInHierarchy)
+                    particle.gameObject.SetActive(true);
+                particle.gameObject.transform.forward = hit.normal;
+                particle.gameObject.transform.position = hit.point;
+            }
+            else if (particle.gameObject.activeInHierarchy)
+                particle.gameObject.SetActive(false);
+        }
+        else
+        {
+            shootRenderer.SetPosition(1, weapon.transform.position + weapon.transform.forward * shootDistance);
+            if(particle.gameObject.activeInHierarchy)
+                particle.gameObject.SetActive(false);
+        }
     }
 
     void Rotate()
@@ -89,6 +124,11 @@ public class PlayerController : MonoBehaviour
         {
             nearShip = true;
             ui.ShipProximity(true);
+        }
+        else if (other.CompareTag("Item"))
+        {
+            playerManager.CollectedItem(other.gameObject.GetComponent<Drop>().id);
+            Destroy(other.gameObject);
         }
     }
 

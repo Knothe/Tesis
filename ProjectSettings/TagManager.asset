@@ -5,6 +5,10 @@ TagManager:
   serializedVersion: 2
   tags:
   - Ship
+  - Item
+  - Asteroid
+  - Tree
+  - Ground
   layers:
   - Default
   - TransparentFX
@@ -15,8 +19,8 @@ TagManager:
   - 
   - 
   - Ground
-  - 
-  - 
+  - Tree
+  - IgnoreLight
   - 
   - 
   - 

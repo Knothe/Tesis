@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class Drop : MonoBehaviour
 {
-    // Start is called before the first frame update
+    public int id;
+
     void Start()
     {
         

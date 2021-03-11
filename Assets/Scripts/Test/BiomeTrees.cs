@@ -7,10 +7,10 @@ using UnityEngine;
 public class BiomeTrees : ScriptableObject
 {
     // Max Size of 4
-    [SerializeField] MenuTree tree1;
-    [SerializeField] MenuTree tree2;
-    [SerializeField] MenuTree tree3;
-    [SerializeField] MenuTree tree4;
+    public MenuTree tree1;
+    public MenuTree tree2;
+    public MenuTree tree3;
+    public MenuTree tree4;
 
     public MenuTree[] trees { get; private set; }
 
@@ -18,6 +18,16 @@ public class BiomeTrees : ScriptableObject
     {
         if (trees == null)
             trees = new MenuTree[4];
+        trees[0] = tree1;
+        trees[1] = tree2;
+        trees[2] = tree3;
+        trees[3] = tree4;
+    }
+
+    public void Initialize()
+    {
+        Debug.Log("Initialized");
+        trees = new MenuTree[4];
         trees[0] = tree1;
         trees[1] = tree2;
         trees[2] = tree3;

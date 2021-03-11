@@ -9,7 +9,7 @@ public class TerrainManager : MonoBehaviour
     public Material defaultMaterial;
     [SerializeField]
     public TerrainInfo planetData;
-    public PlanetsManager planetManager; 
+    public PlanetsManager planetManager { get; set; }
 
     Face[] faces = new Face[6];
 
@@ -20,16 +20,23 @@ public class TerrainManager : MonoBehaviour
 
     public Transform treeHoldersParent { get; private set; }
 
+    public TerrainManager()
+    {
+
+    }
+
+
     private void Start()
     {
         planetData.SetTerrainManager(this);
+        if(gameObject.name != "Planet")
+            planetData.SetBiomes();
         GenerateTerrain();
-        planetData.humidityCount++;
     }
 
     private void Update()
     {
-        planetData.Update();
+        planetData.SetPlayerRelativePosition();
         UpdateBiggestDetail();
         UpdateChunkDetail();
         UpdateVisibleChunks();
@@ -357,24 +364,37 @@ public class TerrainManager : MonoBehaviour
 
     }
 
-    public void GenerateTerrain()
+    public void GenerateFromManager()
     {
-        if(planetManager == null)
-        {
-            Debug.LogError("No hay Planet Manager");
-            return;
-        }
+        planetData.SetTerrainManager(this, CalculateMinMaxdistance());
+    }
 
-        planetManager.Initialize();
+    public void GenerateOnEditor()
+    {
+        Debug.Log("MaxDistance: " + CalculateMaxDistance());
+        planetData.SetTerrainManager(this);
+        planetData.SetBiomes();
+        GenTerrain();
+        planetData.humidityCount--;
+    }
+
+    private void GenerateTerrain()
+    {
+        planetData.SetTerrainManager(this, CalculateMinMaxdistance());
+        GenTerrain();
+    }
+
+    void GenTerrain()
+    {
         float time = Time.realtimeSinceStartup;
         DeleteAllChilds();
-        planetData.InstantiateNoise();
-        planetData.SetTerrainManager(this);
+        planetData.InitializeValues();
         updateVisibilityNodes = new Dictionary<int4, Node>();
         detailLimitNode = new Dictionary<int4, Node>();
         biggestDetailList = new Dictionary<int4, Node>();
         int heightChunks = planetData.GetChunkHeight();
-        for(int i = 0; i < 6; i++)
+        faces = new Face[6];
+        for (int i = 0; i < 6; i++)
         {
             faces[i] = new Face(i, planetData, gameObject.transform);
             faces[i].GenerateChunks(defaultMaterial, heightChunks);
@@ -387,16 +407,33 @@ public class TerrainManager : MonoBehaviour
         UpdateBiggestDetail();
         Debug.Log(Time.realtimeSinceStartup - time);
     }
+    
+    float CalculateMinMaxdistance()
+    {
+        float res = planetData.planetRadius / planetData.minChunkPerFace;
+        Vector3 center = ((Vector3.forward * planetData.planetRadius) + (Vector3.right * res) + (Vector3.up * res));
+        float3 triAngles = float3.zero;
+        triAngles.x = (Vector3.Angle(center, Vector3.forward)) * (Mathf.PI / 180);
+        triAngles.y = Mathf.Abs(Mathf.Asin(((planetData.planetRadius + res) * Mathf.Sin(triAngles.x)) / planetData.planetRadius));
+        triAngles.z = Mathf.PI - triAngles.x - triAngles.y;
+        float d = Mathf.Sqrt((2 * ((planetData.planetRadius * planetData.planetRadius) + (planetData.planetRadius * res)) * (1 - Mathf.Cos(triAngles.z))) + (res * res));
+        return d - 1;
+    }
+
+    public float CalculateMaxDistance()
+    {
+        float res = planetData.planetRadius / planetData.minChunkPerFace;
+        return (2 * planetData.planetRadius) + res;
+    }
 
     void GenerateTreeHoldersParent()
     {
         if (treeHoldersParent != null)
             Destroy(treeHoldersParent);
-        GameObject temp;
-        temp = new GameObject("TreeHoldersParent");
-        treeHoldersParent = temp.transform;
-        treeHoldersParent.localPosition = Vector3.zero;
+        treeHoldersParent = new GameObject("TreeHoldersParent").transform;
         treeHoldersParent.parent = transform;
+        treeHoldersParent.localRotation = Quaternion.identity;
+        treeHoldersParent.localPosition = Vector3.zero;
     }
 
     // Temporal for debugging

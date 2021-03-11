@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if (UNITY_EDITOR) 
+using UnityEngine;
 using UnityEditor;
 
 [CustomEditor(typeof(TerrainManager))]
@@ -14,7 +15,7 @@ public class TerrainEditor : Editor
         }
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Generate New Planet"))
-            terrain.GenerateTerrain();
+            terrain.GenerateOnEditor();
         if (GUILayout.Button("Update Terrain"))
             terrain.UpdateTerrain();
         GUILayout.EndHorizontal();
@@ -25,3 +26,4 @@ public class TerrainEditor : Editor
         terrain = (TerrainManager)target;
     }
 }
+#endif

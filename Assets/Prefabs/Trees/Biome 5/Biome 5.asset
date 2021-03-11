@@ -15,16 +15,16 @@ MonoBehaviour:
   tree1:
     treePrefabs:
     - {fileID: 9215403558085393471, guid: f04c2d38b3aadcc40831acec98f455ed, type: 3}
-    radius: 2
+    radius: 20
   tree2:
     treePrefabs:
     - {fileID: 1496635251058145420, guid: f49ff9fd4b22fa14593c47ae9526986e, type: 3}
-    radius: 2
+    radius: 30
   tree3:
     treePrefabs:
     - {fileID: 846942307101682232, guid: 2f31e88833d1a1342b5e798bf62e2224, type: 3}
-    radius: 2
+    radius: 25
   tree4:
     treePrefabs:
     - {fileID: 7315030820780938481, guid: 487fbbad9c936e9449dfcf6bf339eae3, type: 3}
-    radius: 2
+    radius: 21

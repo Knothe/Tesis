@@ -4,7 +4,6 @@ using Unity.Mathematics;
 using UnityEngine;
 
 // Player Movement On Space
-[RequireComponent(typeof(Rigidbody))]
 public class ShipController : MonoBehaviour
 {
     // Flying values
@@ -13,6 +12,9 @@ public class ShipController : MonoBehaviour
     public float camSensitivity;
     public float movementRadius;
     public GameObject shipCam;
+
+    public float2 forwardUpgrade, strafeUpgrade, hoverUpgrade;
+    public float2 forwardAccUpgrade, strafeAccUpgrade, hoverAccUpgrade;
 
     // Landing values
     public float landingDistance;
@@ -23,15 +25,36 @@ public class ShipController : MonoBehaviour
     public float launchDistance;
     public float accelerationDistance;
 
+    // Life Values
+    public int maxLife;
+    // min -> x, max -> y
+    public int2 treeDamageLimit;
+    public int2 asteroidDamageLimit;
+    public int2 crashDamageLimit;
+
+    int treeDamage;
+    int crashDamage;
+    int asteroidDamage;
+
+    public int currentLife { get; private set; }
+
     public LayerMask groundMask;
     public Transform playerSpawnPoint;
     public SpaceShipUI ui;
+
+    public MeshRenderer shipRenderer;
+    public Texture2D[] main;
+    public Texture2D[] sec;
+    public Texture2D[] engine;
+    public Texture2D[] window;
+    public Texture2D extra;
 
     public ShipState state { get; private set; }
 
     PlanetaryBody currentPlanet;
     PlayerManager playerManager;
-    Rigidbody rb;
+    Rigidbody rb { get; set; }
+    int4 textIndex;
 
     float activeForwardSpeed, activeStrafeSpeed, activeHoverSpeed;
     float planetEffect;
@@ -39,7 +62,8 @@ public class ShipController : MonoBehaviour
     float lastDistance;
 
     Vector2 mouseOffset, mouseRelative;
-    Vector3 movement, shipToPlanet;
+    public Vector3 movement { get; private set; }
+    Vector3 shipToPlanet;
     LandingData landingData;
 
     List<LandingPoint> landingPointList = new List<LandingPoint>();
@@ -49,11 +73,14 @@ public class ShipController : MonoBehaviour
         playerManager = manager;
         ResetFocus();
         state = ShipState.Fly;
-        rb = gameObject.GetComponent<Rigidbody>();
-        rb.constraints = RigidbodyConstraints.FreezeRotation;
-        rb.useGravity = false;
         planetEffect = 0;
         landingData = new LandingData();
+        textIndex = int4.zero;
+        currentLife = maxLife;
+        SetTexture();
+        treeDamage = treeDamageLimit.y;
+        asteroidDamage = asteroidDamageLimit.y;
+        crashDamage = crashDamageLimit.y;
     }
 
     private void Update()
@@ -63,19 +90,27 @@ public class ShipController : MonoBehaviour
 
         if (state == ShipState.Fly)
             FlyState();
-        else if(state == ShipState.Landing)
+        else if (state == ShipState.Landing)
             LandingState();
-        else if(state == ShipState.Launching)
-        {
+        else if (state == ShipState.Launching)
             LaunchingState();
-        }
-        else
+        else if(state == ShipState.Park)
         {
             if (Input.GetKeyDown(KeyCode.E))
                 SetLaunchState();
             else if (Input.GetKeyDown(KeyCode.Q))
                 PlacePlayerInWorld();
-        }
+        }else if(state == ShipState.Crash)
+            if (Input.GetKeyDown(KeyCode.Q))
+                PlacePlayerInWorld();
+        ui.SetLife(currentLife);
+    }
+
+    public void RepairCrash()
+    {
+        state = ShipState.Park;
+        ChangeUIState();
+        landingData.downVector = (currentPlanet.transform.position - transform.position).normalized;
     }
 
     void ChangeUIState()
@@ -89,6 +124,24 @@ public class ShipController : MonoBehaviour
     void PlacePlayerInWorld()
     {
         playerManager.ExitShip();
+        Destroy(GetComponent<Rigidbody>());
+    }
+
+    public void Reactivate()
+    {
+        gameObject.AddComponent<Rigidbody>();
+        rb = gameObject.GetComponent<Rigidbody>();
+        rb.constraints = RigidbodyConstraints.FreezeAll;
+        rb.useGravity = false;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.centerOfMass = Vector3.zero;
+        shipCam.SetActive(true);
+        ui.gameObject.SetActive(true);
+    }
+
+    public void StartRigidBody()
+    {
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
     }
 
     void FlyState()
@@ -107,13 +160,10 @@ public class ShipController : MonoBehaviour
 
     void LandingState()
     {
-        if (landingPoinCount >= landingPointList.Count - 1)
+        if (landingPoinCount >= 3)
         {
             state = ShipState.Park;
-            rb.constraints = RigidbodyConstraints.FreezeAll;
-            movement = Vector3.zero;
-            foreach (LandingPoint l in landingPointList)
-                l.gameObject.SetActive(false);
+            SetLanded();
             ChangeUIState();
         }
         else
@@ -140,6 +190,9 @@ public class ShipController : MonoBehaviour
         {
             state = ShipState.Fly;
             movement = Vector3.zero;
+            activeForwardSpeed = 0;
+            activeStrafeSpeed = 0;
+            activeHoverSpeed = 0;
             ResetFocus();
             ChangeUIState();
         }
@@ -193,6 +246,15 @@ public class ShipController : MonoBehaviour
         return false;
     }
 
+    void SetLanded()
+    {
+        transform.parent = currentPlanet.transform;
+        rb.constraints = RigidbodyConstraints.FreezeAll;
+        movement = Vector3.zero;
+        foreach (LandingPoint l in landingPointList)
+            l.gameObject.SetActive(false);
+    }
+
     void SetLandingState(RaycastHit hit)
     {
         state = ShipState.Landing;
@@ -208,11 +270,13 @@ public class ShipController : MonoBehaviour
 
     void SetLaunchState()
     {
+        transform.parent = null;
         state = ShipState.Launching;
         landingData.downVector *= -1;
         landingData.landingPoint = transform.position + (landingData.downVector * launchDistance);
-        rb.constraints = RigidbodyConstraints.None;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
         lastDistance = -1;
+        movement = Vector3.zero;
         ChangeUIState();
     }
 
@@ -265,9 +329,98 @@ public class ShipController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if(state == ShipState.Fly)
+        if (collision.gameObject.CompareTag("Tree"))
         {
-            state = ShipState.Crash;
+            collision.gameObject.SetActive(false);
+            ModifyLife(-treeDamage);
+        }
+        else
+        {
+            if (state == ShipState.Fly)
+            {
+                if (collision.gameObject.CompareTag("Ground"))
+                {
+                    ModifyLife(-crashDamage);
+                    state = ShipState.Crash;
+                    playerManager.ShipCrashed();
+                    SetLanded();
+                    ChangeUIState();
+                }
+
+                else if (collision.gameObject.CompareTag("Asteroid"))
+                {
+                    ModifyLife(-asteroidDamage);
+                    collision.gameObject.GetComponent<Asteroid>().Desactivate();
+                }
+
+            }
+        }
+    }
+
+    public void ChangeTexture(int id)
+    {
+        if (textIndex[id] < 1)
+        {
+            textIndex[id]++;
+            SetTexture();
+        }
+    }
+
+    void SetTexture()
+    {
+        Texture2D temp = new Texture2D(3, 3);
+        Color c;
+        for(int i = 0; i < temp.width; i++)
+        {
+            for(int j = 0; j < temp.width; j++)
+            {
+                c = main[textIndex[0]].GetPixel(i, j) +
+                    sec[textIndex[1]].GetPixel(i, j) +
+                    engine[textIndex[2]].GetPixel(i, j) +
+                    window[textIndex[3]].GetPixel(i, j) +
+                    extra.GetPixel(i, j);
+                temp.SetPixel(i, j, c);
+            }
+        }
+        temp.Apply();
+        shipRenderer.material.SetTexture("_MainTex", temp);
+    }
+
+    public void ModifyLife(int value)
+    {
+        currentLife += value;
+        if (currentLife > maxLife)
+            currentLife = maxLife;
+        else if (currentLife <= 0)
+            playerManager.PlayerDeath();
+    }
+
+    public void Upgrade(int n)
+    {
+        if (n == 0)
+        {
+            ui.UpgradeColor();
+        } 
+        else if (n == 1)
+        {
+            forwardSpeed = forwardUpgrade;
+            strafeUpgrade = strafeSpeed;
+            hoverUpgrade = hoverSpeed;
+        }
+        else if (n == 2)
+        {
+            crashDamage = crashDamageLimit.x;
+        }
+        else if (n == 3)
+        {
+            treeDamage = treeDamageLimit.x;
+            asteroidDamage = asteroidDamageLimit.x;
+        }
+        else if (n == 4)
+        {
+            forwardAcceleration = forwardAccUpgrade;
+            strafeAcceleration = strafeAccUpgrade;
+            hoverAcceleration = hoverAccUpgrade;
         }
     }
 }
