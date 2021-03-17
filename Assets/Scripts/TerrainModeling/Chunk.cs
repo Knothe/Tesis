@@ -7,14 +7,11 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter), typeof(MeshCollider))]
 public class Chunk : MonoBehaviour
 {
-    public float3 spherePosition;
-
     MeshFilter meshFilter;
     MeshCollider meshCollider;
     public int chunkListIndex { get; set; }
     public Node data { get; private set; }
-
-    bool isLast;
+    public bool isInTreeRange { get; set; }
 
     public void Initialize(Node d, Material m)
     {
@@ -23,7 +20,7 @@ public class Chunk : MonoBehaviour
         meshCollider = gameObject.GetComponent<MeshCollider>();
         gameObject.GetComponent<MeshRenderer>().material = m;
         gameObject.SetActive(true);
-        isLast = d.level == d.data.terrain.levelsOfDetail - 1;
+        isInTreeRange = false;
         //gameObject.GetComponent<MeshRenderer>().material.color = Color.white;
         //chunkListIndex = index;
     }
@@ -38,23 +35,32 @@ public class Chunk : MonoBehaviour
         return data.GenerateVoxelData();
     }
 
+    public void SetMesh(List<TreeData> treeDat, Mesh m)
+    {
+        SetMeshPrivate(m);
+        IsLast(m);
+    }
+
     public void SetMesh(Mesh m)
     {
+        SetMeshPrivate(m);
+        meshCollider.enabled = false;
+    }
+
+    void SetMeshPrivate(Mesh m)
+    {
         if (data.data.terrain.drawAsSphere)
-            //gameObject.transform.localPosition = data.cubePosition;
             gameObject.transform.localPosition = data.data.chunkCenter;
         else
             gameObject.transform.localPosition = data.cubePosition;
         gameObject.transform.localRotation = Quaternion.identity;
-        spherePosition = data.faceLocation;
         meshFilter.sharedMesh = m;
-        if (isLast)
-        {
-            meshCollider.sharedMesh = m;
-            meshCollider.enabled = true;
-        }
-        else
-            meshCollider.enabled = false;
+    }
+
+    void IsLast(Mesh m)
+    {
+        meshCollider.sharedMesh = m;
+        meshCollider.enabled = true;
     }
 
     public void IsLimit()

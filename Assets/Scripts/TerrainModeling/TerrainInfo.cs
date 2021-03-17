@@ -24,11 +24,15 @@ public class TerrainInfo
     public bool showBiome;
     public Gradient temperatureGradient;
     public Gradient humidityGradient;
-    public Texture2D biomeTexture;
+    public Texture2D biomeTexture; // Port to PlanetsManager
     [Range(1, 9)]
     public int biomeQuantity;
     public bool useColors;
-    public BiomeColors biomeColors;
+    public BiomeColors biomeColors; // Port to planetsManager
+    public TreeSets treeSet { get; set; }
+    public bool instantiateTrees;
+    public bool chooseBiomes;
+    public int[] menuBiomeNumber;
 
     public int levelsOfDetail { get; private set; }
     public List<int> reescaleValues { get; private set; }
@@ -40,17 +44,34 @@ public class TerrainInfo
     public float lodChange { get; private set; }
 
     float[] lodDistances;
-
     Noise noise = new Noise(0);
-    TerrainManager terrainManager;
-    Dictionary<double, int> decimalNoise;
+    public TerrainManager terrainManager { get; private set; }
     float noiseMaxHeight { get; set; }
     public float maxValue { get; private set; }
     float humidityDistance { get; set; }
 
     float[,,] humidityValues;   // face, x, y
-    Color[] biomes { get; set; }
-    int[] biomeNumber;
+    int[] biomeNumber { get; set; }
+    Dictionary<int3, TreePerChunk> treeCollection { get; set; }
+
+    public TerrainInfo()
+    {
+
+    }
+
+    public TerrainInfo(bool algorithm, int minCPF, int maxCPF, int chunkD, int humidityDef, bool useC, bool tree)
+    {
+        isMarchingCube = algorithm;
+        minChunkPerFace = minCPF;
+        maxChunkPerFace = maxCPF;
+        chunkDetail = chunkD;
+        humidityCount = humidityDef;
+        useColors = useC;
+        showBiome = true;
+        drawAsSphere = true;
+        showAll = false;
+        instantiateTrees = tree;
+    }
 
     public TerrainInfo(float r, int mH, bool algorithm, int minCPF, int maxCPF, int chunkD, List<NoiseSettings> s, float3 offset)
     {
@@ -64,6 +85,18 @@ public class TerrainInfo
         noiseOffset = offset;
     }
 
+    public void OnValidate()
+    {
+        if(settings.Count < 3)
+        {
+            Debug.Log("Minimum Size of 3");
+            for (int i = settings.Count; i < 3; i++)
+                settings.Add(new NoiseSettings());
+        }
+        if (!CheckChunks())
+            Debug.LogError("Chunks (" + minChunkPerFace + ", " + maxChunkPerFace + ") don't coincide");
+    }
+
     public void SetClimate(int hCount, float hMove, Gradient tGrad, Gradient hGradient, int bQuantity)
     {
         humidityCount = hCount;
@@ -73,19 +106,30 @@ public class TerrainInfo
         biomeQuantity = bQuantity;
     }
 
-    public void InstantiateNoise()
+    #region InitializeTerrain
+
+    public void InitializeValues()
     {
         noise = new Noise(0);
         levelsOfDetail = GetDetailCount();
         if (levelsOfDetail == -1)
             Debug.LogError("Chunks don't coincide");
+        SetResolutionValues();
+        SetLoDValues();
+        SetNoiseMaxHeight();
+        SetHumidityMap();
+        treeCollection = new Dictionary<int3, TreePerChunk>();
+    }
+
+    void SetResolutionValues()
+    {
         reescaleValues = new List<int>();
         resolutionVectors = new float3[6];
         faceStart = new float3[6];
         maxResolution = (planetRadius * 2) / maxChunkPerFace;
-        for(int i = 0; i < 6; i++)
+        for (int i = 0; i < 6; i++)
         {
-            resolutionVectors[i] = new float3(  
+            resolutionVectors[i] = new float3(
                 TerrainManagerData.dirMult[i].x * maxResolution,
                 TerrainManagerData.dirMult[i].y * maxResolution,
                 TerrainManagerData.dirMult[i].z * maxResolution);
@@ -93,7 +137,10 @@ public class TerrainInfo
                 (TerrainManagerData.dir[i].c0 * planetRadius) -
                 (TerrainManagerData.dir[i].c1 * planetRadius);
         }
+    }
 
+    void SetLoDValues()
+    {
         int rTemp = 1;
         lodDistances = new float[levelsOfDetail];
         for (int i = 0; i < levelsOfDetail; i++)
@@ -103,34 +150,57 @@ public class TerrainInfo
             lodDistances[i] = planetRadius / (i + 1);
         }
         lodDistances[levelsOfDetail - 1] = 0;
-        decimalNoise = new Dictionary<double, int>();
         lodChange = planetRadius / (levelsOfDetail - 1);
-        noiseMaxHeight = 2;
-        SetHumidityMap();
-        SetBiomes();
-        humidityCount--;
     }
 
-    void SetBiomes()
+    void SetNoiseMaxHeight()
     {
-        biomes = new Color[biomeQuantity];
-        biomeNumber = new int[biomeQuantity];
-        int temp, rand;
-        for(int i = 0; i < biomeQuantity; i++)
+        noiseMaxHeight = 0;
+        for(int i = 0; i < settings.Count; i += 2)
+            noiseMaxHeight += settings[i].strength;
+    }
+
+    public void SetBiomes(int[] biomes)
+    {
+        biomeNumber = biomes;
+    }
+
+    public void SetBiomes()
+    {
+        if(biomeQuantity == 9)
         {
-            temp = TerrainInfoData.randomBiome[biomeQuantity - 1][i].Length;
-            if (temp > 0)
+            biomeNumber = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+            return;
+        }
+        else
+            biomeNumber = new int[9];
+        List<int> tempList = new List<int>(new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 });
+        List<int> selectedBiomes;
+
+        if (chooseBiomes && menuBiomeNumber.Length == biomeQuantity)
+        {
+            selectedBiomes = new List<int>(menuBiomeNumber);
+            foreach(int n in selectedBiomes)
             {
-                rand = UnityEngine.Random.Range(0, temp);
-                biomes[i] = TerrainInfoData.biomeColor[TerrainInfoData.randomBiome[biomeQuantity - 1][i][rand]];
-                biomeNumber[i] = TerrainInfoData.randomBiome[biomeQuantity - 1][i][rand];
-            }
-            else
-            {
-                biomes[i] = TerrainInfoData.biomeColor[TerrainInfoData.randomBiome[biomeQuantity - 1][i][0]];
-                biomeNumber[i] = TerrainInfoData.randomBiome[biomeQuantity - 1][i][0];
+                biomeNumber[n] = n;
+                tempList.Remove(n);
             }
         }
+        else
+        {
+            selectedBiomes = new List<int>();
+            int rand;
+            for (int i = 0; i < biomeQuantity; i++)
+            {
+                rand = UnityEngine.Random.Range(0, tempList.Count);
+                biomeNumber[tempList[rand]] = tempList[rand];
+                selectedBiomes.Add(tempList[rand]);
+                tempList.RemoveAt(rand);
+            }
+        }
+
+        foreach(int n in tempList)
+            biomeNumber[n] = selectedBiomes[UnityEngine.Random.Range(0, selectedBiomes.Count)];
     }
 
     int GetDetailCount()
@@ -149,6 +219,37 @@ public class TerrainInfo
             return -1;
     }
 
+    void SetHumidityMap()
+    {
+        humidityResVec = new float3[6];
+        humidityDistance = (planetRadius * 2) / humidityCount;
+        humidityCount++;
+        humidityValues = new float[6, humidityCount, humidityCount];
+        List<HashSet<int3>> waterBodies = new List<HashSet<int3>>();
+        List<HashSet<int3>> otherWaterBodies = new List<HashSet<int3>>();
+
+        for (int i = 0; i < 6; i++)
+            humidityResVec[i] = new float3(TerrainManagerData.dirMult[i].x * humidityDistance, TerrainManagerData.dirMult[i].y * humidityDistance, 0);
+
+        GenerateWaterBodies(ref waterBodies, ref otherWaterBodies);
+
+        float humidityModifier = 1 / ((humidityCount / 2) * humidityMove);  // Modificable para que el usuario ingrese su propia distancia
+        float addHumidity = 1 - humidityModifier;
+        bool changed = true;
+        bool current = true;
+        while (changed && addHumidity > 0)
+        {
+            if (current)
+                changed = MoveHumidity(ref waterBodies, ref otherWaterBodies, addHumidity);
+            else
+                changed = MoveHumidity(ref otherWaterBodies, ref waterBodies, addHumidity);
+            current = !current;
+            addHumidity -= humidityModifier;
+        }
+    }
+
+    #endregion
+
     public float GetLoDDistance(int level)
     {
         if (level < 0)
@@ -164,16 +265,16 @@ public class TerrainInfo
     public float GetNoiseValue(float3 pos, int levelOfDetail)
     {
         float v;
-        v = noise.Evaluate((pos + settings[0].centre) * settings[0].scale);
-        v += Math.Sign(v) * 
-            Mathf.Abs(noise.Evaluate((pos + settings[1].centre) * settings[1].scale) *
-            noise.Evaluate((pos + settings[2].centre) * settings[2].scale));
-
+        v = noise.Evaluate((pos * settings[0].scale) + settings[0].centre) * settings[0].strength;
+        v += (Math.Sign(v) * 
+            Mathf.Abs(noise.Evaluate((pos * settings[1].scale) + settings[1].centre) *
+            noise.Evaluate((pos * settings[2].scale) + settings[2].centre))) * settings[2].strength;
+        //noiseOffset
         v = (v / noiseMaxHeight) * maxHeight;
 
         //if (levelOfDetail > 0 && settings.Count > 3)
         //    v += noise.Evaluate((pos + settings[3].centre) * settings[3].scale) * .2f;
-        return v / 2;
+        return v;
     }
 
     public int GetChunkHeight()
@@ -196,14 +297,21 @@ public class TerrainInfo
     public void SetTerrainManager(TerrainManager t)
     {
         terrainManager = t;
-        playerRelativePosition = player.transform.position - terrainManager.transform.position;
-        playerRelativePosition = terrainManager.transform.InverseTransformDirection(playerRelativePosition);
+        SetPlayerRelativePosition();
     }
 
-    public void Update()
+    public void SetTerrainManager(TerrainManager t, float maxDistance)
+    {
+        terrainManager = t;
+        playerRelativePosition = player.transform.position - terrainManager.transform.position;
+        playerRelativePosition = terrainManager.transform.InverseTransformDirection(playerRelativePosition);
+        if (playerRelativePosition.magnitude > maxDistance)
+            playerRelativePosition = playerRelativePosition.normalized * maxDistance;
+    }
+
+    public void SetPlayerRelativePosition()
     {
         playerRelativePosition = player.transform.position - terrainManager.transform.position;
-
         playerRelativePosition = terrainManager.transform.InverseTransformDirection(playerRelativePosition);
     }
 
@@ -227,7 +335,7 @@ public class TerrainInfo
     float GetT(float h, float yPos)
     {
         h -= planetRadius;
-        if (h < 0)
+        if (h <= 0)
             return -1;
         yPos = Mathf.Clamp(Mathf.Abs(yPos) * .8f / planetRadius, 0, 1);
         float v;
@@ -298,32 +406,11 @@ public class TerrainInfo
         return value;
     }
 
-    public Color GetBiome(int f, float height, float yPos, Vector3 p)
+    public Color GetPointColor(int index)
     {
-        float t = GetT(height, yPos);
-        if (t == -1)
-            return GetBiomePoint(9);
-        float h = GetH(f, p);
-        Color c = biomeTexture.GetPixel((int)(biomeTexture.width * t), (int)(biomeTexture.height * h));
-        string id = ColorUtility.ToHtmlStringRGB(c);
-        if (!TerrainInfoData.colorIndexValules.ContainsKey(id))
-        {
-            return Color.black;
-        }
-        int index = TerrainInfoData.colorIndexValules[id];
-
-        return GetBiomePoint(index);
-    }
-
-    Color GetBiomePoint(int index)
-    {
-        Color c;
-        float v = UnityEngine.Random.Range(0.0f, biomeColors.biomeList[index].limits[2]);
-        if (v < biomeColors.biomeList[index].limits[0])
-            return biomeColors.biomeList[index].colors[0];
-        else if (v < biomeColors.biomeList[index].limits[1])
-            return biomeColors.biomeList[index].colors[1];
-        return biomeColors.biomeList[index].colors[2];
+        if (index != 9)
+            index = biomeNumber[index];
+        return terrainManager.planetManager.GetPointColor(index);
     }
 
     public int GetBiomeNumber(int f, float height, float yPos, Vector3 p)
@@ -335,7 +422,7 @@ public class TerrainInfo
         Color c = biomeTexture.GetPixel((int)(biomeTexture.width * t), (int)(biomeTexture.height * h));
         string id = ColorUtility.ToHtmlStringRGB(c);
         int index = TerrainInfoData.colorIndexValules[id];
-        return index; // Modificar después
+        return biomeNumber[index]; // Modificar después
     }
 
     float GetHumidityValue(int f, Vector2 p)
@@ -348,34 +435,7 @@ public class TerrainInfo
         return humidityValues[temp.x, temp.y, temp.z];
     }   
 
-    void SetHumidityMap()
-    {
-        humidityResVec = new float3[6];
-        humidityDistance = (planetRadius * 2) / humidityCount;
-        humidityCount++;
-        humidityValues = new float[6, humidityCount, humidityCount];
-        List<HashSet<int3>> waterBodies = new List<HashSet<int3>>();
-        List<HashSet<int3>>  otherWaterBodies = new List<HashSet<int3>>();
-
-        for(int i = 0; i < 6; i++)
-            humidityResVec[i] = new float3(TerrainManagerData.dirMult[i].x * humidityDistance, TerrainManagerData.dirMult[i].y * humidityDistance, 0);
-        
-        GenerateWaterBodies(ref waterBodies, ref otherWaterBodies);
-        
-        float humidityModifier = 1 / (planetRadius * humidityMove);  // Modificable para que el usuario ingrese su propia distancia
-        float addHumidity = 1 - humidityModifier;
-        bool changed = true;
-        bool current = true;
-        while (changed && addHumidity > 0)
-        {
-            if (current)
-                changed = MoveHumidity(ref waterBodies, ref otherWaterBodies, addHumidity);
-            else
-                changed = MoveHumidity(ref otherWaterBodies, ref waterBodies, addHumidity);
-            current = !current;
-            addHumidity -= humidityModifier;
-        }
-    }
+    
 
     #region GenerateWaterBodies
     void GenerateWaterBodies(ref List<HashSet<int3>> waterBodies, ref List<HashSet<int3>> otherWaterBodies)
@@ -391,7 +451,7 @@ public class TerrainInfo
                     if (humidityValues[face, i, j] == 0)
                     {
                         point = PlainToWorld(face, i, j);
-                        value = noise.Evaluate((point + noiseOffset + settings[0].centre) * settings[0].scale);
+                        value = noise.Evaluate((point * settings[0].scale) + settings[0].centre);
                         if (value >= 0)
                             humidityValues[face, i, j] = .001f;
                         else
@@ -491,7 +551,7 @@ public class TerrainInfo
         {
             //float3 point = faceStart[temp.x] + new float3(temp.y * humidityResVec[temp.x].x, temp.z * humidityResVec[temp.x].y, 0);
             float3 point = PlainToWorld(temp.x, temp.y, temp.z);
-            float value = noise.Evaluate((point + settings[0].centre) * settings[0].scale);
+            float value = noise.Evaluate((point * settings[0].scale) + settings[0].centre);
             if (value >= 0)
             {
                 humidityValues[temp.x, temp.y, temp.z] = .001f;
@@ -597,12 +657,198 @@ public class TerrainInfo
         return point;
     }
     #endregion
+
+    #region TreeGeneration
+    public void ActivateTrees(int3 pos, int face, float3 startPoint)
+    {
+        if (pos.z < 0)
+            return;
+        int3 key = new int3(pos.x, pos.y, face);
+        if (!treeCollection.ContainsKey(key))
+            GenerateChunkTrees(key, startPoint);
+        TreePerChunk tpc = treeCollection[key];
+        if (!tpc.positionSet)
+            RecalculatePositions(tpc);
+        tpc.activatedChunks++;
+        if (tpc.isActive)
+            return;
+        InstantiateTrees(tpc);
+    }
+
+    void RecalculatePositions(TreePerChunk tpc) 
+    {
+        RaycastHit hit;
+        float maxDistance = planetRadius + (maxHeight * 2);
+        Vector3 temp;
+        for(int i = tpc.treeDataList.Count - 1; i>=0; i--)
+        {
+            temp = terrainManager.transform.TransformPoint(tpc.treeDataList[i].spherePos);
+            if (Physics.Raycast(temp, terrainManager.transform.position - temp, out hit, Mathf.Infinity, terrainManager.planetManager.groundLayer))
+                tpc.treeDataList[i].spherePos = terrainManager.transform.InverseTransformPoint(hit.point);
+            else
+                tpc.treeDataList.RemoveAt(i);
+        }
+        tpc.positionSet = true;
+    }
+
+    public void DesactivateTrees(int3 pos, int face)
+    {
+        if (pos.z < 0)
+            return;
+        int3 key = new int3(pos.x, pos.y, face);
+        if (treeCollection.ContainsKey(key))
+        {
+            TreePerChunk tpc = treeCollection[key];
+            if(tpc.activatedChunks > 0)
+                tpc.activatedChunks--;
+            if(tpc.activatedChunks == 0)
+            {
+                Queue<Tree> childTreeList = new Queue<Tree>();
+                List<GameObject> strayItems = new List<GameObject>();
+                for (int i = 0; i < tpc.inGameHolder.childCount; i++)
+                {
+                    if (tpc.inGameHolder.GetChild(i).CompareTag("Item"))
+                        strayItems.Add(tpc.inGameHolder.GetChild(i).gameObject);
+                    else
+                        childTreeList.Enqueue(tpc.inGameHolder.GetChild(i).GetComponent<Tree>());
+                }
+
+                int index = 0;
+                foreach(GameObject g in strayItems)
+                    GameObject.Destroy(g);
+
+                while (childTreeList.Count > 0)
+                {
+                    if (!childTreeList.Peek().gameObject.activeInHierarchy)
+                        tpc.treeDataList.RemoveAt(index);
+                    else
+                        index++;
+                    terrainManager.planetManager.DesactivateTree(childTreeList.Dequeue());
+                }
+                terrainManager.planetManager.DesactivateTreeHolder(tpc.inGameHolder.transform);
+                tpc.isActive = false;
+                tpc.inGameHolder = null;
+            }
+        }
+    }
+
+    void InstantiateTrees(TreePerChunk tpc)
+    {
+        tpc.isActive = true;
+        Transform holder = terrainManager.planetManager.GetTreeHolder();
+        holder.transform.parent = terrainManager.treeHoldersParent;
+        holder.localPosition = Vector3.zero;
+        holder.localRotation = Quaternion.identity;
+        tpc.inGameHolder = holder;
+        Tree temp;
+        Vector3 vT = Vector3.zero;
+        foreach(TreeData t in tpc.treeDataList)
+        {
+            temp = terrainManager.planetManager.GetTree(t.biome, t.id);
+            if(temp == null)
+            {
+                Debug.LogError("Missing prefab");
+                return;
+            }
+            temp.transform.parent = holder;
+            temp.transform.up = t.spherePos;
+
+            vT.Set(0, UnityEngine.Random.Range(0, 360), 0);
+            temp.transform.localEulerAngles = temp.transform.eulerAngles;
+            temp.transform.Rotate(vT, Space.Self);
+
+            temp.transform.localPosition = t.spherePos;
+
+            
+
+            temp.Activate();
+        }
+    }
+
+    void GenerateChunkTrees(int3 id, float3 startPoint)
+    {
+        // Generate flora
+        startPoint[TerrainManagerData.axisIndex[id.z][2]] = faceStart[id.z][TerrainManagerData.axisIndex[id.z][2]];
+        TreePerChunk tpc = new TreePerChunk();
+        float size = maxResolution;
+        int treeCount = 0;
+        int notCreatedCount = 0;
+        float3 pos = float3.zero;
+        TreeData t;
+        while (notCreatedCount < terrainManager.planetManager.treeSet.missedTreesMax && treeCount < terrainManager.planetManager.treeSet.maxTrees)
+        {
+            pos.x = UnityEngine.Random.Range(0, size);
+            pos.y = UnityEngine.Random.Range(0, size);
+            t = GenerateTreeData(pos, startPoint, id.z);
+            if (t != null && isCreatable(tpc, t))
+            {
+                tpc.AddTree(t);
+                notCreatedCount = 0;
+                treeCount++;
+            }
+            else
+                notCreatedCount++;
+        }
+        tpc.SetCenter();
+        treeCollection.Add(id, tpc);
+    }
+
+    TreeData GenerateTreeData(float3 pos, float3 startPoint, int f)
+    {
+        TreeData td = new TreeData();
+
+        Vector3 cubePos;
+        Vector3 spherePos;
+        cubePos = startPoint + (pos.x * TerrainManagerData.dir[f].c0) +
+            (pos.y * TerrainManagerData.dir[f].c1);
+
+        float height = GetNoiseValue((float3)cubePos + noiseOffset, 0);
+        if (height <= 0)
+            return null;
+
+        height += planetRadius;
+        spherePos = cubePos.normalized * height;
+        td.biome = GetBiomeNumber(f, height, spherePos.y, cubePos);
+
+        td.id = 0;
+        if (CalculateTreeType(cubePos, terrainManager.planetManager.treeSet.scale1, terrainManager.planetManager.treeSet.offset1))
+            td.id++;
+        if (CalculateTreeType(cubePos, terrainManager.planetManager.treeSet.scale2, terrainManager.planetManager.treeSet.offset2))
+            td.id += 2;
+        td.radius = terrainManager.planetManager.treeSet.biomeTrees[td.biome].trees[td.id].radius;
+        td.cubePos = cubePos;
+        td.spherePos = spherePos.normalized * (planetRadius + maxHeight);
+        return td;
+    }
+
+    bool CalculateTreeType(Vector3 pos, float scale, Vector3 offset)
+    {
+        pos += offset;
+        pos *= scale;
+        float sample = noise.Evaluate(pos);
+        return sample < 0;
+    }
+
+    bool isCreatable(TreePerChunk tpc, TreeData newTree)
+    {
+        float dif;
+        foreach (TreeData t in tpc.treeDataList)
+        {
+            dif = (newTree.cubePos - t.cubePos).magnitude;
+            if (dif <= t.radius || dif <= newTree.radius)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    #endregion
+
 }
 
 [Serializable]
 public class NoiseSettings
 {
-    public bool activate;
     public float strength = 1;
     public float scale = 1;         // tal vez cambiar por frequency
     public float3 centre;
@@ -621,18 +867,7 @@ public static class TerrainInfoData
         {"46D164", 6},  // Taiga
         {"4682D1", 7},  // Tundra
         {"D9C01C", 8},  // Desierto
-    };
-
-    public static Color[] biomeColor = {
-        new Color(.6f, .09196f, .09196f),
-        new Color(.8745f, .2549f, .05098f),
-        new Color(.43529f, 87451f, .05098f),
-        new Color(.09196f, .6f, .48235f),
-        new Color(.30196f, .09019f, .6f),
-        new Color(.6039f, .274509f, .8196f),
-        new Color(.2745f, .8196f, .392157f),
-        new Color(.85098f, .075294f, .1098f),
-        new Color(.2745f, .598f, .81961f),
+        //         9       Agua
     };
 
     public static int[][] biomeIndex = {

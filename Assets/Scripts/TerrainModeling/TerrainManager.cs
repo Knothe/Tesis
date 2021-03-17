@@ -2,29 +2,82 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 
 public class TerrainManager : MonoBehaviour
 {
     public Material defaultMaterial;
     [SerializeField]
     public TerrainInfo planetData;
+    public PlanetsManager planetManager;
+
     Face[] faces = new Face[6];
 
     Dictionary<int4, Node> updateVisibilityNodes = new Dictionary<int4, Node>();
     Dictionary<int4, Node> detailLimitNode = new Dictionary<int4, Node>();
+    Dictionary<int4, Node> biggestDetailList = new Dictionary<int4, Node>();
+    float treeDistance;
+
+    public Transform treeHoldersParent { get; private set; }
+
+    public TerrainManager()
+    {
+
+    }
+
 
     private void Start()
     {
         planetData.SetTerrainManager(this);
+        if(gameObject.name != "Planet")
+            planetData.SetBiomes();
         GenerateTerrain();
-        planetData.humidityCount++;
     }
 
     private void Update()
     {
-        planetData.Update();
+        planetData.SetPlayerRelativePosition();
+        UpdateBiggestDetail();
         UpdateChunkDetail();
         UpdateVisibleChunks();
+    }
+
+    private void OnValidate()
+    {
+        if (planetData == null)
+            return;
+
+        planetData.OnValidate();
+    }
+
+    void UpdateBiggestDetail()
+    {
+        if (!planetData.instantiateTrees)
+            return;
+        float dif;
+        foreach(KeyValuePair<int4, Node> key in biggestDetailList)
+        {
+            Node n = key.Value;
+            if (n.inGameChunk == null)
+                continue;
+            dif = (n.inGameChunk.transform.position - planetData.player.transform.position).sqrMagnitude;
+            if (dif < treeDistance)
+            {
+                if (!n.inGameChunk.isInTreeRange)
+                {
+                    planetData.ActivateTrees(n.faceLocation, n.axisID, n.cubePosition);
+                    n.inGameChunk.isInTreeRange = true;
+                }
+            }
+            else
+            {
+                if (n.inGameChunk.isInTreeRange)
+                {
+                    planetData.DesactivateTrees(n.faceLocation, n.axisID);
+                    n.inGameChunk.isInTreeRange = false;
+                }
+            }
+        }
     }
 
     void UpdateChunkDetail()
@@ -61,8 +114,9 @@ public class TerrainManager : MonoBehaviour
         Node neighbor;
         foreach (Node n in added)
         {
-            faces[n.axisID].GenerateChunk(n);
-            n.GenerateMesh2();
+            GenerateChunk(faces[n.axisID], n);
+            n.GenerateMesh();
+            AddToBiggestDetail(n);
             isLimit = false;
             for (i = 0; i < 6; i++)
             {
@@ -117,6 +171,24 @@ public class TerrainManager : MonoBehaviour
 
     }
 
+    public bool GenerateChunk(Face f, Node n)
+    {
+        if (n.IsVisible())
+        {
+            if(n.GenerateVoxelData() && n.inGameChunk == null)
+            {
+                Chunk c = planetManager.GetChunk();
+                c.gameObject.transform.parent = f.parent;
+                c.Initialize(n, defaultMaterial);
+                n.SetChunk(c);
+            }
+        }
+        else
+            return false;
+        n.isActive = true;
+        return true;
+    }
+
     void IncrementDetail(Node node, ref List<Node> remove, ref List<Node> added)
     {
         DesactivateNode(node);
@@ -147,28 +219,32 @@ public class TerrainManager : MonoBehaviour
         return true;
     }
 
-    void DesactivateChunk(Node node)
-    {
-        node.inGameChunk.Desactivate();
-        faces[node.axisID].DesactivateChunk(node.inGameChunk);
-        node.inGameChunk = null;
-    }
-
     void DesactivateNode(Node node)
     {
         node.isActive = false;
         if (node.inGameChunk == null)
             return;
-        DesactivateChunk(node);
+        planetManager.DesactivateChunk(node);
     }
 
     void RemoveFromDetailLimit(Node n)
     {
         int4 id = n.GetIDValue();
         if (detailLimitNode.ContainsKey(id))
-        {
             detailLimitNode.Remove(id);
-        }
+        if (biggestDetailList.ContainsKey(id))
+            biggestDetailList.Remove(id);
+    }
+
+    void AddToBiggestDetail(Node n)
+    {
+        if (n.level == planetData.levelsOfDetail - 1)
+            if (n.inGameChunk != null)
+            {
+                int4 id = n.GetIDValue();
+                if (!biggestDetailList.ContainsKey(id))
+                    biggestDetailList.Add(id, n);
+            }
     }
 
     void AddToDetailLimit(Node n)
@@ -225,14 +301,14 @@ public class TerrainManager : MonoBehaviour
             if (n.inGameChunk == null)
             {
                 changed.Add(n);
-                faces[key.w].GenerateChunk(n);
-                n.GenerateMesh2();
+                GenerateChunk(faces[key.w], n);
+                n.GenerateMesh();
             }
         }
         else if (n.inGameChunk != null)
         {
             changed.Add(n);
-            DesactivateChunk(n);
+            planetManager.DesactivateChunk(n);
         }
     }
 
@@ -283,46 +359,81 @@ public class TerrainManager : MonoBehaviour
             updateVisibilityNodes.Add(id, n);
     }
 
-    private void OnValidate()
-    {
-        if (planetData == null)
-            return;
-        if (planetData.settings.Count < 3)
-        {
-            Debug.Log("Minimum Size of 3");
-            for (int i = planetData.settings.Count; i < 3; i++)
-                planetData.settings.Add(new NoiseSettings());
-        }
-
-        if (!planetData.CheckChunks())
-            Debug.LogError("Chunks (" + planetData.minChunkPerFace + ", " + planetData.maxChunkPerFace + ") don't coincide");
-
-    }
-
     public void UpdateTerrain()
     {
 
     }
 
-    public void GenerateTerrain()
+    public void GenerateFromManager()
+    {
+        planetData.SetTerrainManager(this, CalculateMinMaxdistance());
+    }
+
+    public void GenerateOnEditor()
+    {
+        Debug.Log("MaxDistance: " + CalculateMaxDistance());
+        planetData.SetTerrainManager(this);
+        planetData.SetBiomes();
+        GenTerrain();
+        planetData.humidityCount--;
+    }
+
+    private void GenerateTerrain()
+    {
+        planetData.SetTerrainManager(this, CalculateMinMaxdistance());
+        GenTerrain();
+    }
+
+    void GenTerrain()
     {
         float time = Time.realtimeSinceStartup;
         DeleteAllChilds();
-        planetData.InstantiateNoise();
-        planetData.SetTerrainManager(this);
+        planetData.InitializeValues();
         updateVisibilityNodes = new Dictionary<int4, Node>();
         detailLimitNode = new Dictionary<int4, Node>();
+        biggestDetailList = new Dictionary<int4, Node>();
         int heightChunks = planetData.GetChunkHeight();
-        for(int i = 0; i < 6; i++)
+        faces = new Face[6];
+        for (int i = 0; i < 6; i++)
         {
             faces[i] = new Face(i, planetData, gameObject.transform);
             faces[i].GenerateChunks(defaultMaterial, heightChunks);
         }
-
+        GenerateTreeHoldersParent();
         for (int i = 0; i < 6; i++)
-            faces[i].GenerateMesh(ref updateVisibilityNodes, ref detailLimitNode);
+            faces[i].GenerateMesh(ref updateVisibilityNodes, ref detailLimitNode, ref biggestDetailList);
+        treeDistance = planetData.GetLoDDistance(planetData.levelsOfDetail - 2) / 4;
+        treeDistance *= treeDistance;
+        UpdateBiggestDetail();
         Debug.Log(Time.realtimeSinceStartup - time);
-        planetData.humidityCount--;
+    }
+    
+    float CalculateMinMaxdistance()
+    {
+        float res = planetData.planetRadius / planetData.minChunkPerFace;
+        Vector3 center = ((Vector3.forward * planetData.planetRadius) + (Vector3.right * res) + (Vector3.up * res));
+        float3 triAngles = float3.zero;
+        triAngles.x = (Vector3.Angle(center, Vector3.forward)) * (Mathf.PI / 180);
+        triAngles.y = Mathf.Abs(Mathf.Asin(((planetData.planetRadius + res) * Mathf.Sin(triAngles.x)) / planetData.planetRadius));
+        triAngles.z = Mathf.PI - triAngles.x - triAngles.y;
+        float d = Mathf.Sqrt((2 * ((planetData.planetRadius * planetData.planetRadius) + (planetData.planetRadius * res)) * (1 - Mathf.Cos(triAngles.z))) + (res * res));
+        return d - 1;
+    }
+
+    public float CalculateMaxDistance()
+    {
+        float res = planetData.planetRadius / planetData.minChunkPerFace;
+        return (2 * planetData.planetRadius) + res;
+    }
+
+    void GenerateTreeHoldersParent()
+    {
+        if (treeHoldersParent != null)
+            Destroy(treeHoldersParent);
+        treeHoldersParent = new GameObject("TreeHoldersParent").transform;
+        treeHoldersParent.parent = transform;
+        treeHoldersParent.localRotation = Quaternion.identity;
+        treeHoldersParent.localPosition = Vector3.zero;
     }
 
     // Temporal for debugging
@@ -360,9 +471,9 @@ public class TerrainManager : MonoBehaviour
 
 public static class TerrainManagerData
 {
-    // c0 = axisA
-    // c1 = axisB
-    // c2 = Up
+    // c0 = axisA = Right
+    // c1 = axisB = Front
+    // c2 = Up    = Up
     public static readonly float3x3[] dir = {
         new float3x3(new float3(0, 0, 1), new float3(0, 1, 0), new float3(1, 0, 0)),
         new float3x3(new float3(-1, 0, 0), new float3(0, 1, 0), new float3(0, 0, 1)),

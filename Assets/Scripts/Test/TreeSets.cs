@@ -1,18 +1,32 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
-public class TreeSets : MonoBehaviour
+[Serializable]
+public class TreeSets
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    // Noise Data
+    public float scale1;        // .01
+    public Vector3 offset1;
+    
+    public float scale2;        // .01
+    public Vector3 offset2;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public int maxTrees;
+    public int missedTreesMax;
+
+    // Siempre 9
+    public BiomeTrees[] biomeTrees = new BiomeTrees[9];
 }
+
+// Selva Tropical
+// Bosque Tropical
+// Sabana
+// Selva Templada
+// Bosque Templado
+// Herbazal
+// Taiga
+// Tundra
+// Desierto

@@ -24,11 +24,11 @@ public class Cells
     {
         id = faceID;
         axis = (int3x3)TerrainManagerData.dir[faceID];
-        indexModifiers[0] = int3.zero;
-        indexModifiers[1] = axis.c0;
-        indexModifiers[2] = axis.c0 + axis.c1;
-        indexModifiers[3] = axis.c1;
-        indexModifiers[4] = axis.c2;
+        indexModifiers[0] = int3.zero;                      // Start
+        indexModifiers[1] = axis.c0;                        // Right
+        indexModifiers[2] = axis.c0 + axis.c1;              
+        indexModifiers[3] = axis.c1;                        // Left
+        indexModifiers[4] = axis.c2;                        // up
         indexModifiers[5] = axis.c0 + axis.c2;
         indexModifiers[6] = axis.c0 + axis.c1 + axis.c2;
         indexModifiers[7] = axis.c1 + axis.c2;

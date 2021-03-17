@@ -233,8 +233,6 @@ public class DualContouringAlgorithm : Algorithm
         if (terrain.drawAsSphere)
         {
             m.vertices = SquareToCircle(vertexList).ToArray();
-            //if (terrain.showBiome)
-                //m.uv = SetUV(triangles).ToArray();
         }
         else
             m.vertices = vertexList.ToArray();
@@ -294,81 +292,43 @@ public class DualContouringAlgorithm : Algorithm
     // 7 Tundra             128
     // 8 Desierto           256
 
-    List<Vector2> SetUV(List<int> triangles)
-    {
-        List<Vector2> uvValues = new List<Vector2>(new Vector2[vertexList.Count]);
-        int val;
-        int[] values = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
-        for(int i = 2; i < triangles.Count; i += 3)
-        {
-            val = values[biome[triangles[i]]];
-            if ((val & values[biome[triangles[i - 1]]]) != values[biome[triangles[i - 1]]])
-                val += values[biome[triangles[i - 1]]];
-
-            if ((val & values[biome[triangles[i - 2]]]) != values[biome[triangles[i - 2]]])
-                val += values[biome[triangles[i - 2]]];
-
-            if (TerrainManagerData.UVPositions.ContainsKey(val))
-            {
-
-                uvValues[triangles[i]] = GetUVPoint(val, biome[triangles[i]]);
-                uvValues[triangles[i - 1]] = GetUVPoint(val, biome[triangles[i - 1]]);
-                uvValues[triangles[i - 2]] = GetUVPoint(val, biome[triangles[i - 2]]);
-            }
-            else
-            {
-                uvValues[triangles[i]] = Vector2.zero;
-                uvValues[triangles[i - 1]] = Vector2.zero;
-                uvValues[triangles[i - 2]] = Vector2.zero;
-            }
-        }
-        return uvValues;
-    }
-
-    Vector2 GetUVPoint(int id, int biome)
-    {
-        Area a;
-        if (TerrainManagerData.UVPositions[id].ContainsKey(biome))
-            a = TerrainManagerData.UVPositions[id][biome];
-        else
-            return Vector2.zero;
-        return new Vector2(UnityEngine.Random.Range(a.limit1.x, a.limit2.x), UnityEngine.Random.Range(a.limit1.y, a.limit2.y));
-    }
-
     List<Vector3> SquareToCircle(List<Vector3> p)
     {
         float height;
         Vector3 temp, newVertex;
         List<Vector3> newVertexList = new List<Vector3>();
         colors.Clear();
+        chunkCenter = Vector3.zero;
         foreach (Vector3 v in p)
         {
             temp = v + (Vector3)start;
             height = Mathf.Abs(temp[TerrainManagerData.axisIndex[axisID].z]);
             temp[TerrainManagerData.axisIndex[axisID].z] = terrain.planetRadius * TerrainManagerData.dirMult[axisID].z;
             newVertex = temp.normalized * height;
-
-            if (terrain.showBiome)
-            {
-                colors.Add(terrain.GetBiome(axisID, height, newVertex.y, temp));
-                biome.Add(terrain.GetBiomeNumber(axisID, height, newVertex.y, temp));
-            }
-            else
-            {
-                if (!terrain.showTemperature)
-                {
-                    colors.Add(terrain.GetHumidity(axisID, temp));
-                }
-                else
-                {
-                    colors.Add(terrain.GetTemperature(height, newVertex.y));
-
-                }
-            }
+            SetVertexBiome(height, newVertex.y, temp);
             newVertexList.Add(newVertex);
         }
-
+        chunkCenter /= newVertexList.Count;
+        for (int i = 0; i < vertexList.Count; i++)
+            newVertexList[i] -= chunkCenter;
         return newVertexList;
+    }
+
+    void SetVertexBiome(float h, float y, Vector3 temp)
+    {
+        if (terrain.showBiome)
+        {
+            int b = terrain.GetBiomeNumber(axisID, h, y, temp);
+            biome.Add(b);
+            colors.Add(terrain.GetPointColor(b));
+        }
+        else
+        {
+            if (!terrain.showTemperature)
+                colors.Add(terrain.GetHumidity(axisID, temp));
+            else
+                colors.Add(terrain.GetTemperature(h, y));
+        }
     }
 
     bool SetPointsList(CubeEdge c, int3x2 e, ref List<int> tris)
