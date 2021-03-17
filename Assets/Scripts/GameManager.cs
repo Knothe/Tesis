@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
     public float distanceForAsteroids;
     public float asteroidActiveDistance;
 
+    public AudioClip spaceMusic;
+    public AudioClip[] planetsMusic;
 
     bool asteroidActive;
     int asteroidCount;
@@ -49,6 +51,7 @@ public class GameManager : MonoBehaviour
         distanceAdvanced = 0;
         unusedAsteroids = new Queue<Asteroid>();
         asteroidCount = 0;
+        GetComponent<AudioSource>().ignoreListenerPause = true;
         GenerateNewAsteroids();
     }
 
@@ -93,6 +96,11 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    public AudioClip GetPlanetAudio(int id)
+    {
+        return planetsMusic[id % planetsMusic.Length];
     }
 
     void GenerateAsteroids(int n)
@@ -158,14 +166,17 @@ public class GameManager : MonoBehaviour
     public void FinishGame(bool s)
     {
         if (s)
-            SceneManager.LoadScene(0);
+            PlayerPrefs.SetInt("GameState", 1);
         else
-            SceneManager.LoadScene(0);
+            PlayerPrefs.SetInt("GameState", 2);
+        PlayerPrefs.Save();
+        SceneManager.LoadScene(0);
     }
 
     public void ExitGame()
     {
+        PlayerPrefs.SetInt("GameState", 0);
+        PlayerPrefs.Save();
         SceneManager.LoadScene(0);
-
     }
 }

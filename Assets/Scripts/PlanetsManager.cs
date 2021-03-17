@@ -67,6 +67,10 @@ public class PlanetsManager : MonoBehaviour
         CreatedPlanets();
         if (generateNewPlanets)
             GeneratePlanets();
+        for(int i = 0; i < planets.Count; i++)
+        {
+            planets[i].gameObject.GetComponent<PlanetaryBody>().id = i;
+        }
         Initialize();
         terrainTemp = null;
     }
@@ -86,7 +90,7 @@ public class PlanetsManager : MonoBehaviour
     #region GeneratePlanets
     void GeneratePlanets()
     {
-        int numPlanets = Random.Range(minPlanets, maxPlanets);
+        int numPlanets = Random.Range(minPlanets, maxPlanets + 1);
         newPlanets = new List<TerrainManager>();
         GameObject g;
         for(int i = 0; i < numPlanets; i++)
@@ -284,7 +288,8 @@ public class PlanetsManager : MonoBehaviour
             GameObject g = new GameObject("Chunk", typeof(MeshRenderer), typeof(MeshFilter), typeof(MeshCollider), typeof(Chunk));
             c = g.GetComponent<Chunk>();
             g.layer = 8;
-            g.tag = groundTag;
+            if(groundTag != "")
+                g.tag = groundTag;
         }
         c.gameObject.SetActive(true);
         return c;

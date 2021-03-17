@@ -9,7 +9,7 @@ public class TerrainManager : MonoBehaviour
     public Material defaultMaterial;
     [SerializeField]
     public TerrainInfo planetData;
-    public PlanetsManager planetManager { get; set; }
+    public PlanetsManager planetManager;
 
     Face[] faces = new Face[6];
 

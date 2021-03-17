@@ -26,7 +26,6 @@ public class BiomeTrees : ScriptableObject
 
     public void Initialize()
     {
-        Debug.Log("Initialized");
         trees = new MenuTree[4];
         trees[0] = tree1;
         trees[1] = tree2;

@@ -9,6 +9,7 @@ TagManager:
   - Asteroid
   - Tree
   - Ground
+  - NotDestroy
   layers:
   - Default
   - TransparentFX
@@ -21,7 +22,7 @@ TagManager:
   - Ground
   - Tree
   - IgnoreLight
-  - 
+  - Ship
   - 
   - 
   - 

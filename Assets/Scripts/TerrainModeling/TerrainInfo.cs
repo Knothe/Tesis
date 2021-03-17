@@ -658,6 +658,7 @@ public class TerrainInfo
     }
     #endregion
 
+    #region TreeGeneration
     public void ActivateTrees(int3 pos, int face, float3 startPoint)
     {
         if (pos.z < 0)
@@ -679,15 +680,13 @@ public class TerrainInfo
         RaycastHit hit;
         float maxDistance = planetRadius + (maxHeight * 2);
         Vector3 temp;
-        for(int i = 0; i < tpc.treeDataList.Count; i++)
+        for(int i = tpc.treeDataList.Count - 1; i>=0; i--)
         {
             temp = terrainManager.transform.TransformPoint(tpc.treeDataList[i].spherePos);
             if (Physics.Raycast(temp, terrainManager.transform.position - temp, out hit, Mathf.Infinity, terrainManager.planetManager.groundLayer))
-            {
                 tpc.treeDataList[i].spherePos = terrainManager.transform.InverseTransformPoint(hit.point);
-            }
             else
-                Debug.Log("Didn't hit");
+                tpc.treeDataList.RemoveAt(i);
         }
         tpc.positionSet = true;
     }
@@ -816,8 +815,6 @@ public class TerrainInfo
             td.id++;
         if (CalculateTreeType(cubePos, terrainManager.planetManager.treeSet.scale2, terrainManager.planetManager.treeSet.offset2))
             td.id += 2;
-        Debug.Log("Tree: " + terrainManager.planetManager.treeSet.biomeTrees[0].tree1);
-        Debug.Log("Trees: " + terrainManager.planetManager.treeSet.biomeTrees[0]);
         td.radius = terrainManager.planetManager.treeSet.biomeTrees[td.biome].trees[td.id].radius;
         td.cubePos = cubePos;
         td.spherePos = spherePos.normalized * (planetRadius + maxHeight);
@@ -845,6 +842,8 @@ public class TerrainInfo
         }
         return true;
     }
+    #endregion
+
 }
 
 [Serializable]

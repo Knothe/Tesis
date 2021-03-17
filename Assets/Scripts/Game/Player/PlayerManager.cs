@@ -45,6 +45,10 @@ public class PlayerManager : MonoBehaviour
     public int maxRandomMission;
     public int lifeRecovery;
 
+    public int maxItems;
+
+    public AudioSource bgMusicSource;
+
     PlanetaryBody currentPlanet;
     GameManager gameManager;
 
@@ -64,8 +68,11 @@ public class PlayerManager : MonoBehaviour
         currentPlanet = null;
         EnterShip();
         onSpace.StartRigidBody();
+        pauseManager.SetAudioValues();
         pauseManager.gameObject.SetActive(false);
         SetHealthMission();
+        bgMusicSource.ignoreListenerPause = true;
+        bgMusicSource.Play();
     }
 
     public void SetGameManager(GameManager g)
@@ -77,8 +84,8 @@ public class PlayerManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.R))
         {
-            Cursor.visible = !Cursor.visible;
             isPaused = !isPaused;
+            Cursor.visible = isPaused;
             pauseManager.gameObject.SetActive(isPaused);
             if (isPaused)
             {
@@ -87,18 +94,31 @@ public class PlayerManager : MonoBehaviour
             }
             else
                 Time.timeScale = 1;
+            AudioListener.pause = isPaused;
         }
+    }
+
+    public void PlayerLanded()
+    {
+        bgMusicSource.Stop();
+        bgMusicSource.clip = gameManager.GetPlanetAudio(currentPlanet.id);
+    }
+
+    public void SetSpaceMusic()
+    {
+        bgMusicSource.clip = gameManager.spaceMusic;
+        bgMusicSource.Play();
     }
 
     public void ShipCrashed()
     {
-        recoverCrash = new Mission("Arreglar accidente", 3);
+        recoverCrash = new Mission("Fix Crash", 3);
         SetMission(recoverCrash);
     }
 
     void SetHealthMission()
     {
-        recoverHealth = new Mission("Recuperar salud", 3);
+        recoverHealth = new Mission("Recover Health", 3);
         SetMission(recoverHealth);
     }
 
@@ -137,6 +157,8 @@ public class PlayerManager : MonoBehaviour
     public void CollectedItem(int id)
     {
         obtenibles[id]++;
+        if (obtenibles[id] > maxItems)
+            obtenibles[id] = maxItems;
     }
 
     public float CalculatePlayerShipAngle()
@@ -152,9 +174,7 @@ public class PlayerManager : MonoBehaviour
 
     public void ExitShip()
     {
-        onSpace.shipCam.SetActive(false);
-        onSpace.enabled = false;
-        onSpace.ui.gameObject.SetActive(false);
+        onSpace.Desactivate();
         onPlanet.gameObject.SetActive(true);
         onPlanet.ui.gameObject.SetActive(true);
         onPlanet.transform.position = onSpace.playerSpawnPoint.position;
@@ -162,10 +182,12 @@ public class PlayerManager : MonoBehaviour
         onPlanet.currentPlanet = currentPlanet;
         transform.parent = onPlanet.gameObject.transform;
         transform.localPosition = Vector3.zero;
+        bgMusicSource.Play();
     }
 
     public void EnterShip()
     {
+        bgMusicSource.Stop();
         onSpace.enabled = true;
         onPlanet.gameObject.SetActive(false);
         onPlanet.ui.gameObject.SetActive(false);

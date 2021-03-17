@@ -21,10 +21,18 @@ public class PlayerController : MonoBehaviour
     public LayerMask treeMask;
     public LineRenderer shootRenderer;
     public ParticleSystem particle;
+    public MeshRenderer gunRenderer;
+    public Color missColor;
+    public Color targetColor;
+    public AudioSource destroyTreeSound;
+
+    public AudioClip treeDamage;
+    public AudioClip destroyedTree;
 
     public PlanetaryBody currentPlanet { get; set; }
     PlayerManager playerManager;
     Rigidbody rb;
+    bool isPlaying;
 
     float xRotation = 0;
     float yRotation;
@@ -33,6 +41,9 @@ public class PlayerController : MonoBehaviour
     bool jump;
     bool isGrounded;
     bool nearShip;
+    Texture2D gunTexture;
+    bool past;
+
 
     public void CustomStart(PlayerManager manager)
     {
@@ -44,6 +55,9 @@ public class PlayerController : MonoBehaviour
         moveDir = Vector3.zero;
         nearShip = false;
         particle.gameObject.SetActive(false);
+        gunTexture = (Texture2D)gunRenderer.material.GetTexture("_MainTex");
+        past = true;
+        UpdatePistolColor(false);
     }
 
     private void Update()
@@ -73,10 +87,23 @@ public class PlayerController : MonoBehaviour
         shootRenderer.SetPosition(0, weapon.transform.position);
         if (Physics.Raycast(weapon.transform.position, weapon.transform.forward, out hit, shootDistance, treeMask))
         {
+            UpdatePistolColor(true);
             shootRenderer.SetPosition(1, hit.point);
+
             if (Input.GetKey(KeyCode.E))
             {
-                hit.collider.transform.gameObject.GetComponent<Tree>().DealDamage(damage);
+                if (!destroyTreeSound.isPlaying)
+                {
+                    destroyTreeSound.clip = treeDamage;
+                    destroyTreeSound.Play();
+                }
+
+                if (hit.collider.transform.gameObject.GetComponent<Tree>().DealDamage(damage))
+                {
+                    PauseMusic();
+                    destroyTreeSound.PlayOneShot(destroyedTree);
+                }
+
                 if (!particle.gameObject.activeInHierarchy)
                     particle.gameObject.SetActive(true);
                 particle.gameObject.transform.forward = hit.normal;
@@ -87,9 +114,32 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
+            if (destroyTreeSound.isPlaying)
+                PauseMusic();
+            UpdatePistolColor(false);
             shootRenderer.SetPosition(1, weapon.transform.position + weapon.transform.forward * shootDistance);
-            if(particle.gameObject.activeInHierarchy)
+            if (particle.gameObject.activeInHierarchy)
                 particle.gameObject.SetActive(false);
+        }
+    }
+
+    void PauseMusic()
+    {
+        destroyTreeSound.Stop();
+        destroyTreeSound.clip = null;
+    }
+
+    void UpdatePistolColor(bool c)
+    {
+        if(c != past)
+        {
+            if (c)
+                gunTexture.SetPixel(0, 2, targetColor);
+            else
+                gunTexture.SetPixel(0, 2, missColor);
+            gunTexture.Apply();
+            gunRenderer.material.SetTexture("_MainTex", gunTexture);
+            past = c;
         }
     }
 

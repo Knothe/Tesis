@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
+
 // Player Movement On Space
 public class ShipController : MonoBehaviour
 {
@@ -36,7 +37,9 @@ public class ShipController : MonoBehaviour
     int crashDamage;
     int asteroidDamage;
 
-    public int currentLife { get; private set; }
+    public Transform particleObject;
+
+    public float currentLife { get; private set; }
 
     public LayerMask groundMask;
     public Transform playerSpawnPoint;
@@ -48,6 +51,13 @@ public class ShipController : MonoBehaviour
     public Texture2D[] engine;
     public Texture2D[] window;
     public Texture2D extra;
+
+    public AudioSource shipNoises;
+
+    public AudioClip planetCrash;
+    public AudioClip asteroidCrash;
+    public AudioClip treeCrash;
+    public AudioClip shipAlarm;
 
     public ShipState state { get; private set; }
 
@@ -70,6 +80,7 @@ public class ShipController : MonoBehaviour
 
     public void CustomStart(PlayerManager manager)
     {
+        particleObject.gameObject.SetActive(false);
         playerManager = manager;
         ResetFocus();
         state = ShipState.Fly;
@@ -94,28 +105,30 @@ public class ShipController : MonoBehaviour
             LandingState();
         else if (state == ShipState.Launching)
             LaunchingState();
-        else if(state == ShipState.Park)
+        else if (state == ShipState.Park)
         {
             if (Input.GetKeyDown(KeyCode.E))
                 SetLaunchState();
             else if (Input.GetKeyDown(KeyCode.Q))
                 PlacePlayerInWorld();
-        }else if(state == ShipState.Crash)
+        } else if (state == ShipState.Crash)
             if (Input.GetKeyDown(KeyCode.Q))
                 PlacePlayerInWorld();
-        ui.SetLife(currentLife);
     }
 
     public void RepairCrash()
     {
         state = ShipState.Park;
         ChangeUIState();
+        shipNoises.Pause();
+        shipNoises.clip = null;
         landingData.downVector = (currentPlanet.transform.position - transform.position).normalized;
+        particleObject.gameObject.SetActive(false);
     }
 
     void ChangeUIState()
     {
-        if(ui != null)
+        if (ui != null)
         {
             ui.ChangeState(state);
         }
@@ -137,6 +150,18 @@ public class ShipController : MonoBehaviour
         rb.centerOfMass = Vector3.zero;
         shipCam.SetActive(true);
         ui.gameObject.SetActive(true);
+
+        shipNoises.enabled = true;
+        if (state == ShipState.Crash)
+            PlayCrashedSounds();
+    }
+
+    public void Desactivate()
+    {
+        shipCam.SetActive(false);
+        enabled = false;
+        ui.gameObject.SetActive(false);
+        shipNoises.enabled = false;
     }
 
     public void StartRigidBody()
@@ -248,6 +273,7 @@ public class ShipController : MonoBehaviour
 
     void SetLanded()
     {
+        playerManager.PlayerLanded();
         transform.parent = currentPlanet.transform;
         rb.constraints = RigidbodyConstraints.FreezeAll;
         movement = Vector3.zero;
@@ -277,6 +303,7 @@ public class ShipController : MonoBehaviour
         rb.constraints = RigidbodyConstraints.FreezeRotation;
         lastDistance = -1;
         movement = Vector3.zero;
+        playerManager.SetSpaceMusic();
         ChangeUIState();
     }
 
@@ -329,32 +356,52 @@ public class ShipController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Tree"))
+        if(state == ShipState.Fly && collision.gameObject.CompareTag("Ground"))
         {
-            collision.gameObject.SetActive(false);
+            ModifyLife(-crashDamage);
+            state = ShipState.Crash;
+            playerManager.ShipCrashed();
+            SetLanded();
+            ChangeUIState();
+            shipNoises.PlayOneShot(shipAlarm);
+            PlayCrashedSounds();
+            particleObject.gameObject.SetActive(true);
+            CameraShake();
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Tree"))
+        {
+            other.gameObject.SetActive(false);
             ModifyLife(-treeDamage);
+            shipNoises.PlayOneShot(treeCrash);
+            CameraShake();
         }
-        else
+        else if (state == ShipState.Fly && other.gameObject.CompareTag("Asteroid"))
         {
-            if (state == ShipState.Fly)
-            {
-                if (collision.gameObject.CompareTag("Ground"))
-                {
-                    ModifyLife(-crashDamage);
-                    state = ShipState.Crash;
-                    playerManager.ShipCrashed();
-                    SetLanded();
-                    ChangeUIState();
-                }
-
-                else if (collision.gameObject.CompareTag("Asteroid"))
-                {
-                    ModifyLife(-asteroidDamage);
-                    collision.gameObject.GetComponent<Asteroid>().Desactivate();
-                }
-
-            }
+            ModifyLife(-asteroidDamage);
+            other.gameObject.GetComponent<Asteroid>().Desactivate();
+            shipNoises.PlayOneShot(asteroidCrash);
+            CameraShake();
         }
+        ui.SetLife(currentLife / maxLife);
+    }
+
+    
+
+    void CameraShake()
+    {
+        shipCam.GetComponent<CameraShake>().StartShake();
+    }
+
+
+    void PlayCrashedSounds()
+    {
+        shipNoises.clip = shipAlarm;
+        shipNoises.loop = true;
+        shipNoises.Play();
     }
 
     public void ChangeTexture(int id)

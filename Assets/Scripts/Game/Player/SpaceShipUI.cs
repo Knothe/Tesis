@@ -14,7 +14,9 @@ public class SpaceShipUI : MonoBehaviour
     [SerializeField] Transform smallCircle;
     [SerializeField] GameObject canLandText;
     [SerializeField] float radius;
-    [SerializeField] Text life;
+    [SerializeField] Slider lifeSlider;
+    [SerializeField] Gradient lifeColor;
+    [SerializeField] Image lifeSprite;
     [SerializeField] Color filterUpgradeColor;
     [SerializeField] Image bg;
 
@@ -27,9 +29,10 @@ public class SpaceShipUI : MonoBehaviour
         canLandText.SetActive(false);
     }
 
-    public void SetLife(int l)
+    public void SetLife(float l)
     {
-        life.text = l.ToString();
+        lifeSlider.value = l;
+        lifeSprite.color = lifeColor.Evaluate(l);
     }
 
     public void CanLand(bool b)

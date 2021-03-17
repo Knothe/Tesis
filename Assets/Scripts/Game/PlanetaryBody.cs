@@ -6,6 +6,7 @@ using Unity.Mathematics;
 [RequireComponent(typeof(TerrainManager))]
 public class PlanetaryBody : MonoBehaviour
 {
+    public int id;
     public float gravityValue = 10;
     public float2 spaceShipRotation = new float2(.001f, 1.5f); // x -> min, y -> max
     public Vector3 rotation;

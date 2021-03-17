@@ -3,43 +3,68 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using UnityEngine.Audio;
 
 public class PauseMenuManager : MonoBehaviour
 {
+    public Transform mainPause;
+    public Transform audioPause;
+
     public Sprite[] itemSprites;
-    public Image[] itemImages;
     public MissionContainer[] missionList;
-    public Text[] itemQuantity;
 
     public List<Mission> mission;
-    public Transform missionContainer;
-    public Scrollbar scrollbar;
     public float moveDistance;
+
+    public Slider general;
+    public Slider music;
+    public Slider sfx;
+
+    public AudioMixer mixer;
+
 
     public PlayerManager player;
 
     int missionClearedCount;
-    Vector3 initialPos;
+
+    void OnEnable()
+    {
+        mainPause.gameObject.SetActive(true);
+        audioPause.gameObject.SetActive(false);
+
+        general.value = PlayerPrefs.GetFloat("GeneralAudio");
+        music.value = PlayerPrefs.GetFloat("MusicAudio");
+        sfx.value = PlayerPrefs.GetFloat("EffectsAudio");
+    }
 
     void Start()
     {
         missionClearedCount = 0;
-        initialPos = missionContainer.transform.localPosition;
-        for (int i = 0; i < itemImages.Length && i < itemSprites.Length; i++)
-            itemImages[i].sprite = itemSprites[i];
     }
 
-    private void Update()
+
+    public void SetValuesFromMenu(int i)
     {
-        initialPos.y = scrollbar.value * moveDistance;
-        missionContainer.transform.localPosition = initialPos;
+        if(i == 0)
+            PlayerPrefs.SetFloat("GeneralAudio", general.value);
+        else if(i == 1)
+            PlayerPrefs.SetFloat("MusicAudio", music.value);
+        else if(i == 2)
+            PlayerPrefs.SetFloat("EffectsAudio", sfx.value);
+        PlayerPrefs.Save();
+        SetAudioValues();
+    }
+
+    public void SetAudioValues()
+    {
+        mixer.SetFloat("MainVolume", Mathf.Log10(PlayerPrefs.GetFloat("GeneralAudio")) * 20);
+        mixer.SetFloat("MusicVolume", Mathf.Log10(PlayerPrefs.GetFloat("MusicAudio")) * 20);
+        mixer.SetFloat("SfxVolume", Mathf.Log10(PlayerPrefs.GetFloat("EffectsAudio")) * 20);
     }
 
     public void StartMenu()
     {
         int i;
-        for (i = 0; i < player.obtenibles.Length; i++)
-            itemQuantity[i].text = player.obtenibles[i].ToString();
 
         for (i = 0; i < mission.Count; i++)
             SetContainer(i);
@@ -63,7 +88,7 @@ public class PauseMenuManager : MonoBehaviour
         for (int i = 0; i < 3; i++)
         {
             missionList[index].item[i].sprite = itemSprites[mission[index].item[i]];
-            missionList[index].quantity[i].text = mission[index].quantity[i].ToString();
+            missionList[index].quantity[i].text = player.obtenibles[mission[index].item[i]].ToString() + " / " + mission[index].quantity[i].ToString();
         }
         missionList[index].SetVisual(mission[index].cleared, isPosible(mission[index]));
     }
@@ -74,7 +99,7 @@ public class PauseMenuManager : MonoBehaviour
         for (int i = 0; i < 3; i++)
         {
             container.item[i].sprite = itemSprites[m.item[i]];
-            container.quantity[i].text = m.quantity[i].ToString();
+            container.quantity[i].text = player.obtenibles[m.item[i]].ToString() + " / " + m.quantity[i].ToString();
         }
         container.SetVisual(m.cleared, isPosible(m));
     }
@@ -97,12 +122,13 @@ public class PauseMenuManager : MonoBehaviour
         missionList[index].SetVisual(true, false);
         if(index < mission.Count)
         {
-            missionClearedCount++;
+            if(index != mission.Count - 1)
+                missionClearedCount++;
             mission[index].cleared = true;
             for(int i = 0; i < mission[index].item.Length; i++)
                 player.obtenibles[mission[index].item[i]] -= mission[index].quantity[i];
         }
-        player.ClearMission(index, missionClearedCount == mission.Count);
+        player.ClearMission(index, missionClearedCount == mission.Count - 1);
     }
 
 }

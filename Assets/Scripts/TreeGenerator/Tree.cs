@@ -25,7 +25,7 @@ public class Tree : MonoBehaviour
         }
     }
 
-    public void DealDamage(float damage)
+    public bool DealDamage(float damage)
     {
         currentLife -= damage;
         if (currentLife < 0)
@@ -34,7 +34,9 @@ public class Tree : MonoBehaviour
             GameObject obj = Instantiate(drops[GetDrop()], transform.parent);
             obj.transform.position = dropPos.position;
             obj.transform.rotation = dropPos.rotation;
+            return true;
         }
+        return false;
     }
 
     int GetDrop()
