@@ -49,11 +49,12 @@ public class PlayerManager : MonoBehaviour
 
     public AudioSource bgMusicSource;
 
-    PlanetaryBody currentPlanet;
+    public PlanetaryBody currentPlanet { get; private set; }
     GameManager gameManager;
 
     public int[] obtenibles { get; private set; }
     bool isPaused = false;
+    public bool playerIsSpace { get { return onSpace.enabled; } }
 
     public Mission recoverHealth { get; private set; }
     public Mission recoverCrash { get; private set; }
@@ -141,7 +142,7 @@ public class PlayerManager : MonoBehaviour
     {
         currentPlanet = planet;
         onSpace.SetCurrentPlanet(currentPlanet);
-        Debug.Log("Entered");
+        //Debug.Log("Entered");
     }
 
     public void ExitedPlanet(PlanetaryBody planet)
@@ -198,8 +199,7 @@ public class PlayerManager : MonoBehaviour
 
     public void ClearMission(int id, bool cleared)
     {
-        if (cleared)
-            gameManager.FinishGame(true);
+        
 
         if(id == 0)                     // Cambiar color UI nave
         {
@@ -239,6 +239,9 @@ public class PlayerManager : MonoBehaviour
                 obtenibles[recoverCrash.item[i]] -= recoverCrash.quantity[i];
             recoverCrash = null;
         }
+
+        if (cleared && onSpace.state != ShipState.Crash)
+            gameManager.FinishGame(true);
 
         pauseManager.StartMenu();
     }

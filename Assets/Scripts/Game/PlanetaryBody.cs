@@ -11,6 +11,26 @@ public class PlanetaryBody : MonoBehaviour
     public float2 spaceShipRotation = new float2(.001f, 1.5f); // x -> min, y -> max
     public Vector3 rotation;
 
+    public AtmosphereSettings atmosphereSettings;
+    public TerrainManager terrainManager;
+
+    public float planetRadius { get { return terrainManager.planetData.planetRadius; } }
+
+    public float planetHeight { get{ return terrainManager.planetData.maxHeight; } }
+
+    public bool planetAtmosphere { get { return !(!player.playerIsSpace && player.currentPlanet == this); } }
+
+    public bool updateAtmosphere { get {
+            bool r = lastAtmosphere != planetAtmosphere;
+            lastAtmosphere = planetAtmosphere;
+            if (r)
+                Debug.Log("UpdateAtmosphere: " + id);
+            return r;
+        } }
+
+    bool lastAtmosphere;
+
+
     PlayerManager player;
     float dif;
     bool isInside;
@@ -18,14 +38,20 @@ public class PlanetaryBody : MonoBehaviour
     float gravityDiv;
     float mod;
 
+    private void OnValidate()
+    {
+        if(!Application.isPlaying && player == null)
+            player = terrainManager.planetData.player.gameObject.GetComponent<PlayerManager>();
+    }
+
     private void Start()
     {
         isInside = false;
-        TerrainManager terrain = gameObject.GetComponent<TerrainManager>();
-        gravityEffectStart = terrain.planetData.planetRadius + (3 * terrain.planetData.maxHeight);
-        gravityDiv = 2 * terrain.planetData.maxHeight;
+        terrainManager = gameObject.GetComponent<TerrainManager>();
+        gravityEffectStart = terrainManager.planetData.planetRadius + (3 * terrainManager.planetData.maxHeight);
+        gravityDiv = 2 * terrainManager.planetData.maxHeight;
         mod = 0;
-        player = terrain.planetData.player.gameObject.GetComponent<PlayerManager>();
+        player = terrainManager.planetData.player.gameObject.GetComponent<PlayerManager>();
     }
 
     private void Update()
@@ -45,6 +71,13 @@ public class PlanetaryBody : MonoBehaviour
             mod = Mathf.Clamp(dif, 0, gravityDiv) / gravityDiv;
             
         }
+    }
+
+    public void SetValues(int i, TerrainManager t, AtmosphereSettings a)
+    {
+        id = i;
+        terrainManager = t;
+        atmosphereSettings = a;
     }
 
     void EnteredPlanet()

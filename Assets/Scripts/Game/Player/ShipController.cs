@@ -13,6 +13,7 @@ public class ShipController : MonoBehaviour
     public float camSensitivity;
     public float movementRadius;
     public GameObject shipCam;
+    public MeshCollider shipMeshCollider;
 
     public float2 forwardUpgrade, strafeUpgrade, hoverUpgrade;
     public float2 forwardAccUpgrade, strafeAccUpgrade, hoverAccUpgrade;
@@ -80,6 +81,7 @@ public class ShipController : MonoBehaviour
 
     public void CustomStart(PlayerManager manager)
     {
+        shipMeshCollider.enabled = true;
         particleObject.gameObject.SetActive(false);
         playerManager = manager;
         ResetFocus();
@@ -218,6 +220,7 @@ public class ShipController : MonoBehaviour
             activeForwardSpeed = 0;
             activeStrafeSpeed = 0;
             activeHoverSpeed = 0;
+            shipMeshCollider.enabled = true;
             ResetFocus();
             ChangeUIState();
         }
@@ -296,6 +299,7 @@ public class ShipController : MonoBehaviour
 
     void SetLaunchState()
     {
+        shipMeshCollider.enabled = false;
         transform.parent = null;
         state = ShipState.Launching;
         landingData.downVector *= -1;
@@ -367,6 +371,7 @@ public class ShipController : MonoBehaviour
             PlayCrashedSounds();
             particleObject.gameObject.SetActive(true);
             CameraShake();
+            ui.SetLife(currentLife / maxLife);
         }
     }
 
@@ -378,6 +383,7 @@ public class ShipController : MonoBehaviour
             ModifyLife(-treeDamage);
             shipNoises.PlayOneShot(treeCrash);
             CameraShake();
+            ui.SetLife(currentLife / maxLife);
         }
         else if (state == ShipState.Fly && other.gameObject.CompareTag("Asteroid"))
         {
@@ -385,8 +391,8 @@ public class ShipController : MonoBehaviour
             other.gameObject.GetComponent<Asteroid>().Desactivate();
             shipNoises.PlayOneShot(asteroidCrash);
             CameraShake();
+            ui.SetLife(currentLife / maxLife);
         }
-        ui.SetLife(currentLife / maxLife);
     }
 
     

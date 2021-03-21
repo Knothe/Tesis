@@ -39,6 +39,7 @@ public class PlanetsManager : MonoBehaviour
 
     public float plantSizeAlteration;
     public TreeSets treeSet;
+    public AtmosphereSettings atmosphere;
 
     GameManager gameManager;
 
@@ -69,7 +70,7 @@ public class PlanetsManager : MonoBehaviour
             GeneratePlanets();
         for(int i = 0; i < planets.Count; i++)
         {
-            planets[i].gameObject.GetComponent<PlanetaryBody>().id = i;
+            planets[i].gameObject.GetComponent<PlanetaryBody>().SetValues(i, planets[i], atmosphere);
         }
         Initialize();
         terrainTemp = null;
