@@ -84,7 +84,7 @@ public class TerrainManager : MonoBehaviour
     {
         List<Node> added = new List<Node>();
         List<Node> remove = new List<Node>();
-        int i;
+        int i, t;
         Node node;
         foreach (KeyValuePair<int4, Node> key in detailLimitNode)
         {
@@ -96,7 +96,8 @@ public class TerrainManager : MonoBehaviour
             else if (i == 2)
             {
                 node = key.Value.parentNode;
-                if (CheckNodeAvailability(node) == 0)
+                t = CheckNodeAvailability(node);
+                if (t == 0 || t == 2)
                 {
                     if (ReduceDetail(node, ref remove))
                     {
@@ -238,6 +239,7 @@ public class TerrainManager : MonoBehaviour
 
     void AddToBiggestDetail(Node n)
     {
+        
         if (n.level == planetData.levelsOfDetail - 1)
             if (n.inGameChunk != null)
             {
@@ -256,7 +258,7 @@ public class TerrainManager : MonoBehaviour
 
     int CheckNodeAvailability(Node n)
     {
-        float dist = (planetData.GetPlayerRelativePosition() - (Vector3)n.sphereCenter).magnitude;
+       float dist = (planetData.GetPlayerRelativePosition() - (Vector3)n.sphereCenter).magnitude;
         if (dist < planetData.GetLoDDistance(n.level))          // LoD increments
             return 1;
         if (dist >= planetData.GetLoDDistance(n.level - 1))     // LoD decreases
@@ -357,6 +359,9 @@ public class TerrainManager : MonoBehaviour
         int4 id = n.GetIDValue();
         if (!updateVisibilityNodes.ContainsKey(id))
             updateVisibilityNodes.Add(id, n);
+        if (n.level == 0)
+            if (!detailLimitNode.ContainsKey(id))
+                detailLimitNode.Add(id, n);
     }
 
     public void UpdateTerrain()
@@ -405,7 +410,7 @@ public class TerrainManager : MonoBehaviour
         treeDistance = planetData.GetLoDDistance(planetData.levelsOfDetail - 2) / 4;
         treeDistance *= treeDistance;
         UpdateBiggestDetail();
-        Debug.Log(Time.realtimeSinceStartup - time);
+        //Debug.Log(Time.realtimeSinceStartup - time);
     }
     
     float CalculateMinMaxdistance()
