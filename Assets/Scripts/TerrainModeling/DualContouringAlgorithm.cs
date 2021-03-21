@@ -306,6 +306,7 @@ public class DualContouringAlgorithm : Algorithm
             temp[TerrainManagerData.axisIndex[axisID].z] = terrain.planetRadius * TerrainManagerData.dirMult[axisID].z;
             newVertex = temp.normalized * height;
             SetVertexBiome(height, newVertex.y, temp);
+            chunkCenter += newVertex;
             newVertexList.Add(newVertex);
         }
         chunkCenter /= newVertexList.Count;
@@ -437,16 +438,17 @@ public class DualContouringAlgorithm : Algorithm
     {
         List<int3> cubes = new List<int3>();
         List<float4> cPoints = new List<float4>();
+        List<int3> temp = new List<int3>();
 
         if (id < 6)
         {
             if (neighbors[id] == null || neighbors[id].level != level)
                 return false;
             if (neighbors[id].data.axisID != axisID)
-                DifFace(ref ce, DualContouringData.otherEdgeData[id], DualContouringData.otherEdgeData[id].cubesIndex.x, thisEdge,
+                DifFace(ref temp, DualContouringData.otherEdgeData[id], DualContouringData.otherEdgeData[id].cubesIndex.x, thisEdge,
                     ref neighbors, ref cubes, ref cPoints, 2);
             else    // Rotate same face
-                SameFace(ref ce, DualContouringData.otherEdgeData[id], DualContouringData.otherEdgeData[id].cubesIndex.x, thisEdge,
+                SameFace(ref temp, DualContouringData.otherEdgeData[id], DualContouringData.otherEdgeData[id].cubesIndex.x, thisEdge,
                     ref neighbors, ref cubes, ref cPoints, 2);
         }
         else
@@ -463,22 +465,64 @@ public class DualContouringAlgorithm : Algorithm
                 return false;
 
             if (neighbors[otherEdgeData.cubesIndex.x].axisID == axisID)
-                SameFace(ref ce, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.x], otherEdgeData.cubesIndex.x, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
+                SameFace(ref temp, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.x], otherEdgeData.cubesIndex.x, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
             else
-                DifFace(ref ce, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.x], otherEdgeData.cubesIndex.x, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
+                DifFace(ref temp, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.x], otherEdgeData.cubesIndex.x, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
             if (neighbors[otherEdgeData.cubesIndex.y].axisID == axisID)
-                SameFace(ref ce, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.y], otherEdgeData.cubesIndex.y, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
+                SameFace(ref temp, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.y], otherEdgeData.cubesIndex.y, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
             else
-                DifFace(ref ce, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.y], otherEdgeData.cubesIndex.y, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
+                DifFace(ref temp, DualContouringData.otherEdgeData[otherEdgeData.cubesIndex.y], otherEdgeData.cubesIndex.y, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
             if (neighbors[otherEdgeData.cubesIndex.z].axisID == axisID)
-                SameFace(ref ce, otherEdgeData, otherEdgeData.cubesIndex.z, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
+                SameFace(ref temp, otherEdgeData, otherEdgeData.cubesIndex.z, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
             else
-                DifFace(ref ce, otherEdgeData, otherEdgeData.cubesIndex.z, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
+                DifFace(ref temp, otherEdgeData, otherEdgeData.cubesIndex.z, thisEdge, ref neighbors, ref cubes, ref cPoints, 1);
         }
-        int count = ce.cubes.Count;
+        int count = ce.cubes.Count + temp.Count;
         if (count != 4)
+        {
+            if (count == 3)
+                Debug.Log("Hei");
             return false;
+        }
+
+        foreach (int3 v in temp)
+            ce.AddCube(v);
+
         return true;
+    }
+
+    void DifFace(ref List<int3> ce, GetOtherEdgeData otherEdgeData, int cubeID, int3x2 thisEdge, ref Node[] neighbors, ref List<int3> cubes, ref List<float4> cPoints, int points)
+    {
+        int3 dif = int3.zero;
+        int3x2 otherEdge = thisEdge;
+        dif[otherEdgeData.index.x] += otherEdgeData.dir.x * terrain.chunkDetail;
+        dif[otherEdgeData.index.y] += otherEdgeData.dir.y * terrain.chunkDetail;
+        otherEdge[0] -= dif;
+        otherEdge[1] -= dif;
+        int2 temp = TerrainManagerData.RotateSimple(axisID, neighbors[cubeID].data.axisID, otherEdge[0].x, otherEdge[0].z, terrain.chunkDetail + 1);
+        otherEdge[0].x = temp.x;
+        otherEdge[0].z = temp.y;
+
+        temp = TerrainManagerData.RotateSimple(axisID, neighbors[cubeID].data.axisID, otherEdge[1].x, otherEdge[1].z, terrain.chunkDetail + 1);
+        otherEdge[1].x = temp.x;
+        otherEdge[1].z = temp.y;
+        if (!neighbors[cubeID].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID, points))
+            return;
+        for (int i = 0; i < points; i++)
+        {
+            int cubeIndex = cubes.Count - i - 1;
+            if (cubeIndex < 0 || cubeIndex >= cubes.Count)
+            {
+                Debug.Log("Error: Outside");
+                return;
+            }
+            ce.Add(cubes[cubeIndex]);
+            if (!pointsSquare.ContainsKey(cubes[cubeIndex]))
+            {
+                pointsSquare.Add(cubes[cubeIndex], vertexList.Count);
+                vertexList.Add(DifFaceSphereToSquare(cPoints[cubeIndex]));
+            }
+        }
     }
 
     void DifFace(ref CubeEdge ce, GetOtherEdgeData otherEdgeData, int cubeID, int3x2 thisEdge, ref Node[] neighbors, ref List<int3> cubes, ref List<float4> cPoints, int points)
@@ -511,6 +555,35 @@ public class DualContouringAlgorithm : Algorithm
             {
                 pointsSquare.Add(cubes[cubeIndex], vertexList.Count);
                 vertexList.Add(DifFaceSphereToSquare(cPoints[cubeIndex]));
+            }
+        }
+    }
+
+    void SameFace(ref List<int3> ce, GetOtherEdgeData otherEdgeData, int cubeID, int3x2 thisEdge, ref Node[] neighbors, ref List<int3> cubes, ref List<float4> cPoints, int points)
+    {
+        int3 dif = int3.zero;
+        int3x2 otherEdge = thisEdge;
+        dif[otherEdgeData.index.x] += otherEdgeData.dir.x * terrain.chunkDetail;
+        dif[otherEdgeData.index.y] += otherEdgeData.dir.y * terrain.chunkDetail;
+        otherEdge[0] -= dif;
+        otherEdge[1] -= dif;
+        dif[otherEdgeData.index.x] += otherEdgeData.dir.x;
+        dif[otherEdgeData.index.y] += otherEdgeData.dir.y;
+        if (!neighbors[cubeID].data.getEdgeCubes(otherEdge, ref cubes, ref cPoints, dif, level, axisID, points))
+            return;
+        for (int i = 0; i < points; i++)
+        {
+            int cubeIndex = cubes.Count - i - 1;
+            if (cubeIndex < 0 || cubeIndex >= cubes.Count)
+            {
+                Debug.Log("Error: Inside");
+                return;
+            }
+            ce.Add(cubes[cubeIndex]);
+            if (!pointsSquare.ContainsKey(cubes[cubeIndex]))
+            {
+                pointsSquare.Add(cubes[cubeIndex], vertexList.Count);
+                vertexList.Add(SphereToSquare(cPoints[cubeIndex]));
             }
         }
     }
