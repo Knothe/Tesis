@@ -480,8 +480,6 @@ public class DualContouringAlgorithm : Algorithm
         int count = ce.cubes.Count + temp.Count;
         if (count != 4)
         {
-            if (count == 3)
-                Debug.Log("Hei");
             return false;
         }
 
