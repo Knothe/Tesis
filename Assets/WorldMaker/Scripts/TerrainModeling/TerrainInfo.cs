@@ -34,6 +34,16 @@ public class TerrainInfo
     public bool chooseBiomes;
     public int[] menuBiomeNumber;
 
+    public bool useOwnColors;
+    public BiomeColorWrapper biomeColorWrapper;
+
+    BiomeColors biomeColors { get
+        {
+            if (!useOwnColors || biomeColorWrapper == null)
+                return terrainManager.planetManager.biomeColors;
+            return biomeColorWrapper.biomeColors;
+        } }
+
     public int levelsOfDetail { get; private set; }
     public List<int> reescaleValues { get; private set; }
     public float3[] resolutionVectors { get; private set; }
@@ -56,7 +66,11 @@ public class TerrainInfo
 
     public TerrainInfo()
     {
-
+        drawAsSphere = true;
+        showBiome = true;
+        settings = new List<NoiseSettings>();
+        for(int i = 0; i < 3; i++)
+            settings.Add(new NoiseSettings());
     }
 
     public TerrainInfo(bool algorithm, int minCPF, int maxCPF, int chunkD, int humidityDef, bool tree)
@@ -99,6 +113,9 @@ public class TerrainInfo
     {
         if (!CheckChunks())
             Debug.LogError("Chunks (" + minChunkPerFace + ", " + maxChunkPerFace + ") don't coincide");
+
+        if (player == null)
+            player = GameObject.FindObjectOfType<PlayerManager>().transform;
     }
 
     public void SetClimate(int hCount, float hMove, Gradient tGrad, Gradient hGradient, int bQuantity)
@@ -418,11 +435,19 @@ public class TerrainInfo
         return value;
     }
 
-    public Color GetPointColor(int index)
+    public Color GetPointColor(int i)
     {
-        if (index != 9)
-            index = biomeNumber[index];
-        return terrainManager.planetManager.GetPointColor(index);
+        if (i != 9)
+            i = biomeNumber[i];
+
+        BiomeColors b = biomeColors;
+        float v;
+        int maxValue = b.biomeList[i].colors.Length - 1;
+        v = UnityEngine.Random.Range(0.0f, b.biomeList[i].limits[maxValue]);
+        for (int j = 0; j < maxValue; j++)
+            if (v < b.biomeList[i].limits[j])
+                return b.biomeList[i].colors[j];
+        return b.biomeList[i].colors[maxValue];
     }
 
     public int GetBiomeNumber(int f, float height, float yPos, Vector3 p)
@@ -863,9 +888,21 @@ public class TerrainInfo
 [Serializable]
 public class NoiseSettings
 {
-    public float strength = 1;
-    public float scale = 1;         // tal vez cambiar por frequency
-    public float3 centre;
+    public float strength;
+    public float scale;
+    public float3 centre = new float3();
+
+    public NoiseSettings(float st, float sc)
+    {
+        strength = st;
+        scale = sc;
+    }
+
+    public NoiseSettings()
+    {
+        strength = 1;
+        scale = 1;
+    }
 }
 
 public static class TerrainInfoData

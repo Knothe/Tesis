@@ -336,7 +336,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3d1dea9e5d119734e984f8655102b33a, type: 2}
+  - {fileID: 2100000, guid: 68bcb4189526acc46b54eebacb5b2515, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -375,7 +375,7 @@ MeshCollider:
   m_GameObject: {fileID: 3837407542444291610}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 4
   m_Convex: 1
   m_CookingOptions: 30
@@ -389,7 +389,7 @@ BoxCollider:
   m_GameObject: {fileID: 3837407542444291610}
   m_Material: {fileID: 0}
   m_IsTrigger: 1
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 7.1164227, y: 4.592259, z: 13.990421}
   m_Center: {x: 0.0005694628, y: 3.0214026, z: -4.095623}
@@ -613,7 +613,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 1
-  m_Constraints: 14
+  m_Constraints: 0
   m_CollisionDetection: 2
 --- !u!1 &8864926348073544525
 GameObject:

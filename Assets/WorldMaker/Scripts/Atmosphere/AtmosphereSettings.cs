@@ -33,6 +33,7 @@ public class AtmosphereSettings : ScriptableObject
 
     public void SetProperties(Material material, float radius, bool atmosphere, bool updateAtmosphere)
     {
+        
         if(!settingsUpToDate || !Application.isPlaying || updateAtmosphere)
         {
             lastAtmosphere = atmosphere;

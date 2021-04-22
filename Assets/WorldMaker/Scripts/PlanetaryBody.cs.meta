@@ -3,7 +3,9 @@ guid: 7ceb8419a8ed030459acecc62ccc44c1
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - atmosphereSettings: {fileID: 11400000, guid: 0ac86be461b39594f8a324b2285809e4, type: 2}
+  - terrainManager: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

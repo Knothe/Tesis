@@ -13,6 +13,7 @@ public class PlanetaryBody : MonoBehaviour
     public float2 spaceShipRotation = new float2(.001f, 1.5f); // x -> min, y -> max
     public Vector3 rotation;
 
+    //public AtmosphereSettings atmosphereSettings { get { return planetManager.atmosphere; } }
     public AtmosphereSettings atmosphereSettings;
     public TerrainManager terrainManager;
 
@@ -31,7 +32,7 @@ public class PlanetaryBody : MonoBehaviour
 
     bool lastAtmosphere;
 
-
+    PlanetsManager planetManager;
     PlayerManager player;
     float dif;
     bool isInside;
@@ -40,13 +41,17 @@ public class PlanetaryBody : MonoBehaviour
     float mod;
     private void OnValidate()
     {
-        if(terrainManager == null)
+        if (terrainManager == null)
             terrainManager = GetComponent<TerrainManager>();
+        else if (planetManager == null)
+            planetManager = terrainManager.planetManager;
         if(!Application.isPlaying && player == null)
-            player = terrainManager.planetData.player.gameObject.GetComponent<PlayerManager>();
-        if(atmosphereSettings == null)
-            atmosphereSettings = Resources.Load<AtmosphereSettings>("AtmosphereValues");
-
+        {
+            if (terrainManager.planetData != null && terrainManager.planetData.player != null)
+                player = terrainManager.planetData.player.gameObject.GetComponent<PlayerManager>();
+            else if (terrainManager.planetManager != null)
+                player = terrainManager.planetManager.player.gameObject.GetComponent<PlayerManager>();
+        }
     }
 
     private void Start()

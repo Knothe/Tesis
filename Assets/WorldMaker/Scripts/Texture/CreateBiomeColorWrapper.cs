@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.IO;
 
 public class CreateBiomeColorWrapper
 {
@@ -9,9 +10,12 @@ public class CreateBiomeColorWrapper
     public static void CreateColorWrapperObject()
     {
         var asset = ScriptableObject.CreateInstance<BiomeColorWrapper>();
-        AssetDatabase.CreateAsset(asset, "Assets/WorldMaker/ScriptableObjects/BiomeColor.asset");
-        //string path = AssetDatabase.GetAssetPath(Selection.activeObject);
-        //AssetDatabase.CreateAsset(asset, path);
+        string path = AssetDatabase.GetAssetPath(Selection.activeObject);
+        if (path == "")
+            path = "Assets";
+        else if (Path.GetExtension(path) != "")
+            path = path.Replace(Path.GetFileName(AssetDatabase.GetAssetPath(Selection.activeObject)), "");
+        AssetDatabase.CreateAsset(asset, AssetDatabase.GenerateUniqueAssetPath((path + "/NewBiomeColor.asset")));
         AssetDatabase.SaveAssets();
     }
 }

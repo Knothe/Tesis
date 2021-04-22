@@ -50,13 +50,14 @@ public class ShipController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Tab))
             ResetFocus();
         Rotation();
+        Movement();
+
         if (currentPlanet != null)
         {
             planetEffect = currentPlanet.Rotate(transform);
             if (CanLand())
                 return;
         }
-        Movement();
     }
 
     /// <summary>
@@ -101,8 +102,8 @@ public class ShipController : MonoBehaviour
     /// </summary>
     void Rotation()
     {
-        mouseOffset.x += Input.GetAxis("MouseX");
-        mouseOffset.y += Input.GetAxis("MouseY");
+        mouseOffset.x += Input.GetAxis("Mouse X");
+        mouseOffset.y += Input.GetAxis("Mouse Y");
 
         float magnitude = Mathf.Clamp(mouseOffset.magnitude, 0, movementRadius) / movementRadius;
         mouseRelative = mouseOffset.normalized * magnitude;
@@ -115,10 +116,41 @@ public class ShipController : MonoBehaviour
     /// </summary>
     void Movement()
     {
-        activeForwardSpeed = Mathf.Lerp(activeForwardSpeed, Input.GetAxisRaw("Vertical") * Mathf.Lerp(forwardSpeed.y, forwardSpeed.x, planetEffect), Mathf.Lerp(forwardAcceleration.y, forwardAcceleration.x, planetEffect) * Time.deltaTime);
-        activeStrafeSpeed = Mathf.Lerp(activeStrafeSpeed, Input.GetAxisRaw("Horizontal") * Mathf.Lerp(strafeSpeed.y, strafeSpeed.x, planetEffect), Mathf.Lerp(strafeAcceleration.y, strafeAcceleration.x, planetEffect) * Time.deltaTime);
-        activeHoverSpeed = Mathf.Lerp(activeHoverSpeed, Input.GetAxisRaw("Hover") * Mathf.Lerp(hoverSpeed.y, hoverSpeed.x, planetEffect), Mathf.Lerp(hoverAcceleration.y, hoverAcceleration.x, planetEffect) * Time.deltaTime);
+        activeForwardSpeed = Mathf.Lerp(activeForwardSpeed, GetVertical() * Mathf.Lerp(forwardSpeed.y, forwardSpeed.x, planetEffect), Mathf.Lerp(forwardAcceleration.y, forwardAcceleration.x, planetEffect) * Time.deltaTime);
+        //Debug.Log(activeForwardSpeed);
+        activeStrafeSpeed = Mathf.Lerp(activeStrafeSpeed, GetHorizontal() * Mathf.Lerp(strafeSpeed.y, strafeSpeed.x, planetEffect), Mathf.Lerp(strafeAcceleration.y, strafeAcceleration.x, planetEffect) * Time.deltaTime);
+        activeHoverSpeed = Mathf.Lerp(activeHoverSpeed, GetHover() * Mathf.Lerp(hoverSpeed.y, hoverSpeed.x, planetEffect), Mathf.Lerp(hoverAcceleration.y, hoverAcceleration.x, planetEffect) * Time.deltaTime);
         movement = (transform.forward * activeForwardSpeed) + (transform.right * activeStrafeSpeed) + (transform.up * activeHoverSpeed);
+    }
+
+    float GetVertical()
+    {
+        float v = 0;
+        if (Input.GetKey(KeyCode.W))
+            v += 1;
+        if (Input.GetKey(KeyCode.S))
+            v -= 1;
+        return v;
+    }
+
+    float GetHorizontal()
+    {
+        float v = 0;
+        if (Input.GetKey(KeyCode.D))
+            v += 1;
+        if (Input.GetKey(KeyCode.A))
+            v -= 1;
+        return v;
+    }
+
+    float GetHover()
+    {
+        float v = 0;
+        if (Input.GetKey(KeyCode.Space))
+            v += 1;
+        if (Input.GetKey(KeyCode.LeftShift))
+            v -= 1;
+        return v;
     }
 
     /// <summary>

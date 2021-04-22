@@ -9,7 +9,7 @@ public class PlanetInfoDrawer : PropertyDrawer
 {
     Rect r = Rect.zero;
     bool general, noise, climate, debug, chunk;
-    SerializedProperty[] t = new SerializedProperty[20];
+    SerializedProperty[] t = new SerializedProperty[22];
 
     void SetSerializedProperty(SerializedProperty property)
     {
@@ -33,6 +33,8 @@ public class PlanetInfoDrawer : PropertyDrawer
         t[19] = property.FindPropertyRelative("instantiateTrees");
         t[7] = property.FindPropertyRelative("chooseBiomes");
         t[13] = property.FindPropertyRelative("menuBiomeNumber");
+        t[20] = property.FindPropertyRelative("useOwnColors");
+        t[21] = property.FindPropertyRelative("biomeColorWrapper");
 
     }
 
@@ -90,6 +92,12 @@ public class PlanetInfoDrawer : PropertyDrawer
                 SetLabel("Chunk Detail");
                 t[6].intValue = EditorGUI.IntField(r, t[6].intValue);
                 EditorGUI.indentLevel--;
+            }
+            SetLabel("Use Own Colors");
+            t[20].boolValue = EditorGUI.Toggle(r, t[20].boolValue);
+            if (t[20].boolValue)
+            {
+                EditorGUILayout.PropertyField(t[21]);
             }
             EditorGUI.indentLevel--;
         }

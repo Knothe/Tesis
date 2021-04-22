@@ -16,6 +16,14 @@ public class GameManager : MonoBehaviour
     /// </summary>
     float newMaxDistance;
 
+    private void OnValidate()
+    {
+        if (planetManager == null)
+            planetManager = gameObject.GetComponent<PlanetsManager>();
+        if (playerManager == null)
+            playerManager = FindObjectOfType<PlayerManager>();
+    }
+
     void Start()
     {
         planetManager = GetComponent<PlanetsManager>();

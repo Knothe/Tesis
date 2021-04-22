@@ -15,10 +15,7 @@ public class AtmosphereEffect
             mat = new Material(shader);
             planet.atmosphereSettings.settingsUpToDate = false;
         }
-
-            
         planet.atmosphereSettings.SetProperties(mat, planet.planetRadius, planet.planetAtmosphere, planet.updateAtmosphere);
-
         if (lightSource == null)
             lightSource = GameObject.FindObjectOfType<Light>()?.GetComponent<Light>();
 

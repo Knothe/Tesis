@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85e5df1e48911124c83074f7911dcbec, type: 3}
   m_Name: PlanetEffect
   m_EditorClassIdentifier: 
-  atmosphereShader: {fileID: 4800000, guid: 9d47f93f0b7c45641a7e0aad97ad1767, type: 3}
+  atmosphereShader: {fileID: 0}
   displayAtmosphere: 1

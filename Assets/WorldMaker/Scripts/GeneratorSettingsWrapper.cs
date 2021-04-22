@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.IO;
 
 public class CreateSettingsWrapper
 {
@@ -9,7 +10,12 @@ public class CreateSettingsWrapper
     public static void CreateSettingsObject()
     {
         var asset = ScriptableObject.CreateInstance<GeneratorSettingsWrapper>();
-        AssetDatabase.CreateAsset(asset, "Assets/WorldMaker/ScriptableObjects/GeneratorSettings.asset");
+        string p = AssetDatabase.GetAssetPath(Selection.activeObject);
+        if (p == "")
+            p = "Assets";
+        else if (Path.GetExtension(p) != "")
+            p = p.Replace(Path.GetFileName(AssetDatabase.GetAssetPath(Selection.activeObject)), "");
+        AssetDatabase.CreateAsset(asset, AssetDatabase.GenerateUniqueAssetPath((p + "/NewGeneratorSettings.asset")));
         AssetDatabase.SaveAssets();
     }
 }

@@ -10,7 +10,7 @@ public class PlayerManager : MonoBehaviour
     /// <summary>
     /// Checks if player is in space
     /// </summary>
-    public bool playerIsSpace { get { return onSpace.enabled; } }
+    public bool playerIsSpace { get { return onSpace.gameObject.activeInHierarchy; } }
 
     void Start()
     {

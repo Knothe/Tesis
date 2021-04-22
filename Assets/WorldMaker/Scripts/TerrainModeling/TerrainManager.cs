@@ -65,8 +65,11 @@ public class TerrainManager : MonoBehaviour
 
     private void OnValidate()
     {
+        if(planetManager == null)
+            planetManager = GameObject.FindObjectOfType<PlanetsManager>();
+
         if (planetData == null)
-            return;
+            planetData = new TerrainInfo();
 
         planetData.OnValidate();
     }

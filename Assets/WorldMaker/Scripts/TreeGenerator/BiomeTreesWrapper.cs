@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using System.IO;
 
 /// <summary>
 /// Offers the posibility for the BiomeTreewrapper ScriptableObject to instantiate
@@ -10,7 +11,12 @@ public class CreateBiomeTreesWrapper
     public static void CreateTreeWrapperObject()
     {
         var asset = ScriptableObject.CreateInstance<BiomeTreesWrapper>();
-        AssetDatabase.CreateAsset(asset, "Assets/WorldMaker/ScriptableObjects/BiomeTree.asset");
+        string p = AssetDatabase.GetAssetPath(Selection.activeObject);
+        if (p == "")
+            p = "Assets";
+        else if (Path.GetExtension(p) != "")
+            p = p.Replace(Path.GetFileName(AssetDatabase.GetAssetPath(Selection.activeObject)), "");
+        AssetDatabase.CreateAsset(asset, AssetDatabase.GenerateUniqueAssetPath((p + "/NewBiomeTrees.asset")));
         AssetDatabase.SaveAssets();
     }
 }

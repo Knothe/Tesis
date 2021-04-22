@@ -60,6 +60,8 @@ public class PlanetsManager : MonoBehaviour
 
     private void OnValidate()
     {
+        if (player == null)
+            player = GameObject.FindObjectOfType<PlayerManager>().transform;
         foreach (TerrainManager t in planets)
         {
             if(t != null)

@@ -51,8 +51,8 @@ public class PlayerController : MonoBehaviour
         currentPlanet.Attract(transform, rb);
         Rotate();
         CheckGrounded();
-        moveDir.x = Input.GetAxisRaw("Horizontal");
-        moveDir.z = Input.GetAxisRaw("Vertical");
+        moveDir.x = GetHorizontal();
+        moveDir.z = GetVertical();
         moveDir.Normalize();
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
             jump = true;
@@ -60,16 +60,36 @@ public class PlayerController : MonoBehaviour
             playerManager.EnterShip();
     }
 
+    float GetVertical()
+    {
+        float v = 0;
+        if (Input.GetKey(KeyCode.W))
+            v += 1;
+        if (Input.GetKey(KeyCode.S))
+            v -= 1;
+        return v;
+    }
+
+    float GetHorizontal()
+    {
+        float v = 0;
+        if (Input.GetKey(KeyCode.D))
+            v += 1;
+        if (Input.GetKey(KeyCode.A))
+            v -= 1;
+        return v;
+    }
+
     /// <summary>
     /// Rotates player view
     /// </summary>
     void Rotate()
     {
-        xRotation -= Input.GetAxis("MouseY") * mouseSensitivity;
+        xRotation -= Input.GetAxis("Mouse Y") * mouseSensitivity;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
         cam.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
-        yRotation = Input.GetAxis("MouseX") * mouseSensitivity;
+        yRotation = Input.GetAxis("Mouse X") * mouseSensitivity;
         transform.Rotate(Vector3.up * yRotation);
     }
 
