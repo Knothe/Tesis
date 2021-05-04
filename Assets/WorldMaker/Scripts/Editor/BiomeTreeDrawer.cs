@@ -16,20 +16,21 @@ public class BoimeTreeWrapperEditor : Editor
 public class BiomeTreeDrawer : PropertyDrawer
 {
     SerializedProperty menuTreeList;
+    SerializedProperty typesOfTrees;
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(position, label, property);
         menuTreeList = property.FindPropertyRelative("trees");
-        EditorGUI.indentLevel = 0;
-        EditorGUILayout.LabelField("Biome Tree");
+        typesOfTrees = property.FindPropertyRelative("typesOfTrees");
         if (menuTreeList.arraySize != 4)
             menuTreeList.arraySize = 4;
-
-        for (int i = 0; i < menuTreeList.arraySize; i++)
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Types of trees");
+        typesOfTrees.intValue = EditorGUILayout.IntSlider(typesOfTrees.intValue, 1, 4);
+        EditorGUILayout.EndHorizontal();
+        for (int i = 0; i < typesOfTrees.intValue; i++)
             EditorGUILayout.PropertyField(menuTreeList.GetArrayElementAtIndex(i));
-
-        //SetLabel("Salu3");
         EditorGUI.EndProperty();
     }
  

@@ -1,0 +1,148 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bba46aee87e4ca74fb73f1eae7705be0, type: 3}
+  m_Name: NewBiomeTreeCollection
+  m_EditorClassIdentifier: 
+  trees:
+    collection:
+      scale1: 1
+      offset1: {x: -51.37, y: 56.617138, z: -77.30405}
+      scale2: 1
+      offset2: {x: 48.80793, y: 22.049942, z: 52.484844}
+      maxTrees: 500
+      missedTreesMax: 10
+      biomeTrees:
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+      - {fileID: 0}
+    biomeTree:
+    - trees:
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 1
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 1
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 1
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 1
+      typesOfTrees: 1
+    - trees:
+      - treePrefabs:
+        - {fileID: 7856193210262818273, guid: fcf4b1217fd29a2419aff7d89a7155ae, type: 3}
+        radius: 15
+      - treePrefabs:
+        - {fileID: 2488057293935595198, guid: 082891d11c44add4993c3a89f0aa1091, type: 3}
+        radius: 30
+      - treePrefabs:
+        - {fileID: 7856193210262818273, guid: fcf4b1217fd29a2419aff7d89a7155ae, type: 3}
+        radius: 15
+      - treePrefabs:
+        - {fileID: 2488057293935595198, guid: 082891d11c44add4993c3a89f0aa1091, type: 3}
+        radius: 30
+      typesOfTrees: 2
+    - trees:
+      - treePrefabs:
+        - {fileID: 1795133294259667069, guid: 3ad1fd6fd59c00e429ebf391fa9179f2, type: 3}
+        radius: 20
+      - treePrefabs:
+        - {fileID: 6918311344373168949, guid: 2f9d2a41ea0f2074da0e2a5580b8e82f, type: 3}
+        radius: 10
+      - treePrefabs:
+        - {fileID: 7786785103457747179, guid: 1c2d2a2e1b07d384288b147fab760212, type: 3}
+        radius: 30
+      - treePrefabs:
+        - {fileID: 1795133294259667069, guid: 3ad1fd6fd59c00e429ebf391fa9179f2, type: 3}
+        radius: 20
+      typesOfTrees: 3
+    - trees:
+      - treePrefabs:
+        - {fileID: 2722482794394362760, guid: 0e137e2f506fab040a94d57433b43f9c, type: 3}
+        - {fileID: 3723454800447414725, guid: 9ac882f437976e741ac2a7d9b860f9a3, type: 3}
+        radius: 30
+      - treePrefabs:
+        - {fileID: 3643501458007415804, guid: f141eed0a1510944292967a77651b11a, type: 3}
+        - {fileID: 3348548695700771898, guid: 06ba8032086a5e6498c26641567a5a5e, type: 3}
+        radius: 25
+      - treePrefabs:
+        - {fileID: 2722482794394362760, guid: 0e137e2f506fab040a94d57433b43f9c, type: 3}
+        - {fileID: 3723454800447414725, guid: 9ac882f437976e741ac2a7d9b860f9a3, type: 3}
+        radius: 30
+      - treePrefabs:
+        - {fileID: 3643501458007415804, guid: f141eed0a1510944292967a77651b11a, type: 3}
+        - {fileID: 3348548695700771898, guid: 06ba8032086a5e6498c26641567a5a5e, type: 3}
+        radius: 25
+      typesOfTrees: 2
+    - trees:
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      typesOfTrees: 1
+    - trees:
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      typesOfTrees: 1
+    - trees:
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      typesOfTrees: 1
+    - trees:
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      - treePrefabs: []
+        radius: 0
+      typesOfTrees: 1
+    - trees:
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 10
+      - treePrefabs:
+        - {fileID: 3348548695700771898, guid: 06ba8032086a5e6498c26641567a5a5e, type: 3}
+        radius: 10
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 10
+      - treePrefabs:
+        - {fileID: 3348548695700771898, guid: 06ba8032086a5e6498c26641567a5a5e, type: 3}
+        radius: 10
+      typesOfTrees: 2
+    useScriptableObjects: 0

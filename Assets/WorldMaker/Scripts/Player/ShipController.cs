@@ -9,7 +9,7 @@ public class ShipController : MonoBehaviour
     /// <summary> Max and minimum speeds on the 3 main axes </summary>
     public float2 forwardSpeed, strafeSpeed, hoverSpeed;                        // x = max, y = min
     /// <summary> Max and min acceleration on the 3 main axes </summary>
-    public float2 forwardAcceleration, strafeAcceleration, hoverAcceleration;   // x = max, y = min
+    public float forwardAcceleration, strafeAcceleration, hoverAcceleration;   // x = max, y = min
     /// <summary> Rotation of the spaceship </summary>
     public float camSensitivity;
     /// <summary> Mouse Rotation Radius </summary>
@@ -116,10 +116,10 @@ public class ShipController : MonoBehaviour
     /// </summary>
     void Movement()
     {
-        activeForwardSpeed = Mathf.Lerp(activeForwardSpeed, GetVertical() * Mathf.Lerp(forwardSpeed.y, forwardSpeed.x, planetEffect), Mathf.Lerp(forwardAcceleration.y, forwardAcceleration.x, planetEffect) * Time.deltaTime);
+        activeForwardSpeed = Mathf.Lerp(activeForwardSpeed, GetVertical() * Mathf.Lerp(forwardSpeed.y, forwardSpeed.x, planetEffect),forwardAcceleration * Time.deltaTime);
         //Debug.Log(activeForwardSpeed);
-        activeStrafeSpeed = Mathf.Lerp(activeStrafeSpeed, GetHorizontal() * Mathf.Lerp(strafeSpeed.y, strafeSpeed.x, planetEffect), Mathf.Lerp(strafeAcceleration.y, strafeAcceleration.x, planetEffect) * Time.deltaTime);
-        activeHoverSpeed = Mathf.Lerp(activeHoverSpeed, GetHover() * Mathf.Lerp(hoverSpeed.y, hoverSpeed.x, planetEffect), Mathf.Lerp(hoverAcceleration.y, hoverAcceleration.x, planetEffect) * Time.deltaTime);
+        activeStrafeSpeed = Mathf.Lerp(activeStrafeSpeed, GetHorizontal() * Mathf.Lerp(strafeSpeed.y, strafeSpeed.x, planetEffect), strafeAcceleration * Time.deltaTime);
+        activeHoverSpeed = Mathf.Lerp(activeHoverSpeed, GetHover() * Mathf.Lerp(hoverSpeed.y, hoverSpeed.x, planetEffect), hoverAcceleration * Time.deltaTime);
         movement = (transform.forward * activeForwardSpeed) + (transform.right * activeStrafeSpeed) + (transform.up * activeHoverSpeed);
     }
 

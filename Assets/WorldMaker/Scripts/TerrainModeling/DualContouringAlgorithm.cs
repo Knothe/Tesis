@@ -493,6 +493,9 @@ public class DualContouringAlgorithm : Algorithm
         List<float4> cPoints = new List<float4>();
         List<int3> temp = new List<int3>();
 
+        if (id == -1)
+            return false;
+
         if (id < 6)
         {
             if (neighbors[id] == null || neighbors[id].level != level)
@@ -614,10 +617,7 @@ public class DualContouringAlgorithm : Algorithm
         {
             int cubeIndex = cubes.Count - i - 1;
             if (cubeIndex < 0 || cubeIndex >= cubes.Count)
-            {
-                Debug.Log("Error: Inside");
                 return;
-            }
             ce.Add(cubes[cubeIndex]);
             if (!pointsSquare.ContainsKey(cubes[cubeIndex]))
             {

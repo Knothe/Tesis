@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Movement distance possible before moving every object in world
     /// </summary>
-    public float maxDistance;
+    public float maxDistance = 25;
 
     /// <summary>
     /// maxDistance to the power of 2, makes distance calculations faster

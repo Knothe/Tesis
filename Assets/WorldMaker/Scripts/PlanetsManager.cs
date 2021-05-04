@@ -39,7 +39,70 @@ public class PlanetsManager : MonoBehaviour
     public Material planetMaterial;
 
     public float plantSizeAlteration;
+
+    public bool useScriptableTreeSet;
     public TreeSets treeSet;
+    public BiomeTreeCollection treeCollection;
+
+    public float missedTreesMax 
+    { 
+        get 
+        {
+            if (useScriptableTreeSet)
+            {
+                if (treeCollection == null)
+                    return 0;
+                return treeCollection.missedTreesMax;
+            }
+            return treeSet.missedTreesMax;
+        } }
+
+    public float maxTrees
+    {
+        get
+        {
+            if (useScriptableTreeSet)
+            {
+                if (treeCollection == null)
+                    return 0;
+                return treeCollection.maxTrees;
+            }
+            return treeSet.maxTrees;
+        }
+    }
+    
+    public float scale1
+    {
+        get
+        {
+            if (useScriptableTreeSet)
+            {
+                if (treeCollection == null)
+                    return 0;
+                return treeCollection.scale1;
+            }
+            return treeSet.scale1;
+        }
+    }
+    
+    public float scale2
+    {
+        get
+        {
+            if (useScriptableTreeSet)
+            {
+                if (treeCollection == null)
+                    return 0;
+                return treeCollection.scale2;
+            }
+            return treeSet.scale2;
+        }
+    }
+    
+    public Vector3 offset1 { get { return Vector3.zero; } }
+    public Vector3 offset2 { get { return Vector3.zero; } }
+    
+
     public AtmosphereSettings atmosphere;
 
     public Texture2D biomeTexture;
@@ -67,6 +130,13 @@ public class PlanetsManager : MonoBehaviour
             if(t != null)
                 t.planetManager = this;
         }
+    }
+
+    public void CleanPlanetsList()
+    {
+        for(int i = planets.Count - 1; i >= 0; i--)
+            if (planets[i] == null)
+                planets.RemoveAt(i);
     }
 
     private void Awake()
@@ -131,6 +201,11 @@ public class PlanetsManager : MonoBehaviour
                 pos = pos.normalized * dis;
                 pos.y = Random.Range(-elevationVariant, elevationVariant);
                 planets[planetCount].transform.position = pos;
+                if(settings.randomRotation)
+                    planets[planetCount].transform.eulerAngles = new Vector3(
+                        Random.Range(-settings.rotationValues.x, settings.rotationValues.x),
+                        Random.Range(-settings.rotationValues.y, settings.rotationValues.y),
+                        Random.Range(-settings.rotationValues.z, settings.rotationValues.z));
                 planetCount++;
             }
         }
@@ -177,6 +252,9 @@ public class PlanetsManager : MonoBehaviour
         terrainTemp.planetData.player = player;
         terrainTemp.planetData.planetRadius = Random.Range(settings.minPlanetRadius, settings.maxPlanetRadius);
         terrainTemp.planetData.maxHeight = Random.Range(settings.minMaxHeight, settings.maxMaxHeight);
+        terrainTemp.planetData.useCurve = settings.customTemperatures;
+        if (settings.customTemperatures)
+            terrainTemp.planetData.curve = settings.temperatureCurves[Random.Range(0, settings.temperatureCurves.Count)];
         SetNoise();
     }
 
@@ -252,7 +330,7 @@ public class PlanetsManager : MonoBehaviour
                     t.gameObject.SetActive(false);
                     unusedPlanets.Add(t);
                 }
-            }
+            } 
             planets.Clear();
         }
         else
@@ -273,6 +351,16 @@ public class PlanetsManager : MonoBehaviour
             inactiveChunk = CreateGameObject("InactiveChunk");
         if (inactiveTreeHolder == null)
             inactiveTreeHolder = CreateGameObject("InactiveTreeHolder");
+
+        if (useScriptableTreeSet)
+            treeCollection.Initialize();
+        else
+            foreach (BiomeTreesWrapper t in treeSet.biomeTrees)
+            { 
+                if(t != null)
+                    t.biomeTree.Initialize();
+            
+            }
     }
 
     Transform CreateGameObject(string name)
@@ -309,12 +397,30 @@ public class PlanetsManager : MonoBehaviour
 
     public TreeBase GetTree(int biome, int id)
     {
+        if (useScriptableTreeSet)
+        {
+            if (treeCollection == null)
+                return null;
+            return GetTree(treeCollection.GetPrefab(biome, id));
+        }
+        
         if (treeSet.biomeTrees[biome] == null)
             return null;
         return GetTree(treeSet.biomeTrees[biome].GetPrefab(id));
     }
 
-    public TreeBase GetTree(GameObject prefab)
+    public float GetTreeRadius(int biome, int id)
+    {
+        if (useScriptableTreeSet)
+        {
+            if (treeCollection == null)
+                return 0;
+            return treeCollection.GetRadius(biome, id);
+        }
+        return treeSet.biomeTrees[biome].GetRadius(id);
+    }
+
+    TreeBase GetTree(GameObject prefab)
     {
         if (prefab == null)
             return null;
@@ -369,21 +475,6 @@ public class PlanetsManager : MonoBehaviour
         inactiveTreeHolderList.Enqueue(th);
         th.transform.parent = inactiveTreeHolder;
         th.gameObject.SetActive(false);
-    }
-
-    public Color GetPointColor(int i)
-    {
-        float v;
-        int maxValue = biomeColors.biomeList[i].colors.Length - 1;
-        //v = Random.Range(0.0f, biomeColors.biomeList[i].limits[2]);
-        v = Random.Range(0.0f, biomeColors.biomeList[i].limits[maxValue]);
-
-        for(int j = 0; j < maxValue; j++)
-        {
-            if (v < biomeColors.biomeList[i].limits[j])
-                return biomeColors.biomeList[i].colors[j];
-        }
-        return biomeColors.biomeList[i].colors[maxValue];
     }
 }
 

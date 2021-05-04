@@ -7,35 +7,37 @@ using System;
 [Serializable]
 public class TerrainInfo
 {
-    public float planetRadius;//
-    public int minChunkPerFace;//
-    public int maxChunkPerFace;//
-    public int chunkDetail;//
-    public int maxHeight;//
-    public bool isMarchingCube;//
+    public float planetRadius;
+    public int minChunkPerFace;
+    public int maxChunkPerFace;
+    public int chunkDetail;
+    public int maxHeight;
+    public bool isMarchingCube;
 
-    public List<NoiseSettings> settings;//
+    public List<NoiseSettings> settings;
 
-    public Transform player;//
+    public Transform player;
 
-    public bool drawAsSphere;//
-    public bool showAll;//
-    public int humidityCount;//
-    public float humidityMove;//
-    public bool showTemperature;//
-    public bool showBiome;//
+    public bool drawAsSphere;
+    public bool showAll;
+    public int humidityCount;
+    public float humidityMove;
+    public bool showTemperature;
+    public bool showBiome;
 
-    public Gradient temperatureGradient;//
-    public Gradient humidityGradient;//
+    public Gradient temperatureGradient;
+    public Gradient humidityGradient;
 
     [Range(1, 9)]
-    public int biomeQuantity;//
+    public int biomeQuantity;
     public bool instantiateTrees;
     public bool chooseBiomes;
     public int[] menuBiomeNumber;
 
     public bool useOwnColors;
     public BiomeColorWrapper biomeColorWrapper;
+    public bool useCurve;
+    public AnimationCurve curve;
 
     BiomeColors biomeColors { get
         {
@@ -87,7 +89,7 @@ public class TerrainInfo
     }
 
     public TerrainInfo(float r, int minCPF, int maxCPF, int cD, int maxH, bool algorithm, List<NoiseSettings> s, 
-        int hCount, float hMove, Gradient tG, Gradient hG, int bQ, bool iT, bool cB, int[] menuBN)
+        int hCount, float hMove, Gradient tG, Gradient hG, int bQ, bool iT, bool cB, int[] menuBN, bool uC, AnimationCurve c)
     {
         planetRadius = r;
         minChunkPerFace = minCPF;
@@ -107,6 +109,36 @@ public class TerrainInfo
         drawAsSphere = true;
         showAll = false;
         showBiome = true;
+        useCurve = uC;
+        curve = c;
+    }
+
+    public TerrainInfo(float r, bool algorithm, int minCPF, int maxCPF, int cD, float hMove, int bQ)
+    {
+        planetRadius = r;
+        isMarchingCube = algorithm;
+        minChunkPerFace = minCPF;
+        maxChunkPerFace = maxCPF;
+        chunkDetail = cD;
+        humidityMove = hMove;
+        biomeQuantity = bQ;
+
+        chooseBiomes = false;
+        instantiateTrees = false;
+        useCurve = false;
+        drawAsSphere = true;
+        showAll = false;
+        showBiome = true;
+
+        humidityCount = 20;
+        maxHeight = (int)Mathf.Ceil(r / 6);
+        settings = new List<NoiseSettings>();
+        // 1.28 is a value for a planet of radius 1
+        float v = 1.28f / r;
+        settings.Add(new NoiseSettings(1, v, true));
+        settings.Add(new NoiseSettings(1, v * 1.5f, true));
+        settings.Add(new NoiseSettings(1, v * 1.7f, true));
+
     }
 
     public void OnValidate()
@@ -290,7 +322,6 @@ public class TerrainInfo
         v += (Math.Sign(v) * 
             Mathf.Abs(noise.Evaluate((pos * settings[1].scale) + settings[1].centre) *
             noise.Evaluate((pos * settings[2].scale) + settings[2].centre))) * settings[2].strength;
-        //noiseOffset
         v = (v / noiseMaxHeight) * maxHeight;
 
         if(settings.Count > 3)
@@ -300,9 +331,6 @@ public class TerrainInfo
                 v += noise.Evaluate((pos * settings[i].scale) + settings[i].centre) * settings[i].strength;
             }
         }
-
-        //if (levelOfDetail > 0 && settings.Count > 3)
-        //    v += noise.Evaluate((pos + settings[3].centre) * settings[3].scale) * .2f;
         return v;
     }
 
@@ -351,13 +379,9 @@ public class TerrainInfo
 
     public Color GetTemperature(float h, float yPos)
     {
-        h -= planetRadius;
-        if (h < 0)
+        float v = GetT(h, yPos);
+        if (v == -1)
             return Color.blue;
-        yPos = Mathf.Clamp(Mathf.Abs(yPos) * .8f / planetRadius, 0, 1);
-        float v;
-        v = ((h / maxHeight) * .3f);
-        v = 1 - (v + yPos);
         return temperatureGradient.Evaluate(v); 
     }
 
@@ -366,10 +390,14 @@ public class TerrainInfo
         h -= planetRadius;
         if (h <= 0)
             return -1;
-        yPos = Mathf.Clamp(Mathf.Abs(yPos) * .8f / planetRadius, 0, 1);
+        yPos = Mathf.Clamp(Mathf.Abs(yPos) / planetRadius, 0, 1);
+        if (useCurve)
+        {
+            yPos = Mathf.Clamp(curve.Evaluate(yPos), 0, 1);
+        }
         float v;
-        v = ((h / maxHeight) * .3f);
-        v = 1 - (v + yPos);
+        v = h / maxHeight;
+        v = 1 - ((v * .3f) + (yPos * .8f));
         return v;
     }
 
@@ -441,13 +469,8 @@ public class TerrainInfo
             i = biomeNumber[i];
 
         BiomeColors b = biomeColors;
-        float v;
-        int maxValue = b.biomeList[i].colors.Length - 1;
-        v = UnityEngine.Random.Range(0.0f, b.biomeList[i].limits[maxValue]);
-        for (int j = 0; j < maxValue; j++)
-            if (v < b.biomeList[i].limits[j])
-                return b.biomeList[i].colors[j];
-        return b.biomeList[i].colors[maxValue];
+        float v = UnityEngine.Random.Range(0.0f, 1.0f);
+        return b.biomeList[i].Evaluate(v);
     }
 
     public int GetBiomeNumber(int f, float height, float yPos, Vector3 p)
@@ -787,7 +810,7 @@ public class TerrainInfo
             temp = terrainManager.planetManager.GetTree(t.biome, t.id);
             if(temp == null)
             {
-                Debug.LogError("Tree not found");
+                //Debug.LogError("Tree not found");
                 return;
             }
             temp.transform.parent = holder;
@@ -815,7 +838,7 @@ public class TerrainInfo
         int notCreatedCount = 0;
         float3 pos = float3.zero;
         TreeData t;
-        while (notCreatedCount < terrainManager.planetManager.treeSet.missedTreesMax && treeCount < terrainManager.planetManager.treeSet.maxTrees)
+        while (notCreatedCount < terrainManager.planetManager.missedTreesMax && treeCount < terrainManager.planetManager.maxTrees)
         {
             pos.x = UnityEngine.Random.Range(0, size);
             pos.y = UnityEngine.Random.Range(0, size);
@@ -850,11 +873,11 @@ public class TerrainInfo
         td.biome = GetBiomeNumber(f, height, spherePos.y, cubePos);
 
         td.id = 0;
-        if (CalculateTreeType(cubePos, terrainManager.planetManager.treeSet.scale1, terrainManager.planetManager.treeSet.offset1))
+        if (CalculateTreeType(cubePos, terrainManager.planetManager.scale1, terrainManager.planetManager.offset1))
             td.id++;
-        if (CalculateTreeType(cubePos, terrainManager.planetManager.treeSet.scale2, terrainManager.planetManager.treeSet.offset2))
+        if (CalculateTreeType(cubePos, terrainManager.planetManager.scale2, terrainManager.planetManager.offset2))
             td.id += 2;
-        td.radius = terrainManager.planetManager.treeSet.biomeTrees[td.biome].GetRadius(td.id);
+        td.radius = terrainManager.planetManager.GetTreeRadius(td.biome, td.id);
         td.cubePos = cubePos;
         td.spherePos = spherePos.normalized * (planetRadius + maxHeight);
         return td;
@@ -892,10 +915,16 @@ public class NoiseSettings
     public float scale;
     public float3 centre = new float3();
 
-    public NoiseSettings(float st, float sc)
+    public NoiseSettings(float st, float sc, bool r)
     {
         strength = st;
         scale = sc;
+        if (r)
+            centre = new float3(
+                UnityEngine.Random.Range(-100.0f, 100.0f), 
+                UnityEngine.Random.Range(-100.0f, 100.0f), 
+                UnityEngine.Random.Range(-100.0f, 100.0f)
+                );
     }
 
     public NoiseSettings()

@@ -9,7 +9,8 @@ public class PlanetInfoDrawer : PropertyDrawer
 {
     Rect r = Rect.zero;
     bool general, noise, climate, debug, chunk;
-    SerializedProperty[] t = new SerializedProperty[22];
+    bool[] layers = new bool[1];
+    SerializedProperty[] t = new SerializedProperty[24];
 
     void SetSerializedProperty(SerializedProperty property)
     {
@@ -35,6 +36,8 @@ public class PlanetInfoDrawer : PropertyDrawer
         t[13] = property.FindPropertyRelative("menuBiomeNumber");
         t[20] = property.FindPropertyRelative("useOwnColors");
         t[21] = property.FindPropertyRelative("biomeColorWrapper");
+        t[22] = property.FindPropertyRelative("curve");
+        t[23] = property.FindPropertyRelative("useCurve");
 
     }
 
@@ -119,8 +122,38 @@ public class PlanetInfoDrawer : PropertyDrawer
                 return;
             }
             t[8].arraySize = quantity;
+            if (layers.Length != quantity)
+                layers = new bool[quantity];
+            SerializedProperty[] temp = new SerializedProperty[6];
             for (int i = 0; i < quantity; i++)
-                EditorGUILayout.PropertyField(t[8].GetArrayElementAtIndex(i));
+            {
+                layers[i] = EditorGUILayout.Foldout(layers[i], "Layer " + i);
+                if(layers[i])
+                {
+                    EditorGUI.indentLevel++;
+                    temp[0] = t[8].GetArrayElementAtIndex(i).FindPropertyRelative("strength");
+                    temp[1] = t[8].GetArrayElementAtIndex(i).FindPropertyRelative("scale");
+                    temp[2] = t[8].GetArrayElementAtIndex(i).FindPropertyRelative("centre");
+                    temp[3] = temp[2].FindPropertyRelative("x");
+                    temp[4] = temp[2].FindPropertyRelative("y");
+                    temp[5] = temp[2].FindPropertyRelative("z");
+                    EditorGUILayout.PropertyField(temp[0]);
+                    EditorGUILayout.PropertyField(temp[1]);
+                    Vector3 vTemp = new Vector3(temp[3].floatValue, temp[4].floatValue, temp[5].floatValue);
+                    SetLabel("Offset");
+                    if(GUI.Button(r, new GUIContent("Randomize")))
+                    {
+                        vTemp.x = Random.Range(-1000.0f, 1000.0f);
+                        vTemp.y = Random.Range(-1000.0f, 1000.0f);
+                        vTemp.z = Random.Range(-1000.0f, 1000.0f);
+                    }
+                    vTemp = EditorGUILayout.Vector3Field("", vTemp);
+                    temp[3].floatValue = vTemp.x;
+                    temp[4].floatValue = vTemp.y;
+                    temp[5].floatValue = vTemp.z;
+                    EditorGUI.indentLevel--;
+                }
+            }
             EditorGUI.indentLevel--;
         }
     }
@@ -144,6 +177,11 @@ public class PlanetInfoDrawer : PropertyDrawer
                 DrawBiomeChoose();
             }
             t[19].boolValue = EditorGUILayout.Toggle(new GUIContent("Instantiate Trees"), t[19].boolValue);
+
+            t[23].boolValue = EditorGUILayout.Toggle(new GUIContent("Use Temperature Curve"), t[23].boolValue);
+            if(t[23].boolValue)
+                t[22].animationCurveValue = EditorGUILayout.CurveField(t[22].animationCurveValue);
+
             EditorGUI.indentLevel--;
         }
     }

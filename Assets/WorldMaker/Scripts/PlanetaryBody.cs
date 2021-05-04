@@ -8,10 +8,9 @@ using UnityEditor;
 [RequireComponent(typeof(TerrainManager))]
 public class PlanetaryBody : MonoBehaviour
 {
-    public int id;
+    public int id { get; set; }
     public float gravityValue = 10;
     public float2 spaceShipRotation = new float2(.001f, 1.5f); // x -> min, y -> max
-    public Vector3 rotation;
 
     //public AtmosphereSettings atmosphereSettings { get { return planetManager.atmosphere; } }
     public AtmosphereSettings atmosphereSettings;
@@ -66,7 +65,6 @@ public class PlanetaryBody : MonoBehaviour
 
     private void Update()
     {
-        gameObject.transform.Rotate(rotation, Space.World);
         dif = gravityEffectStart - (transform.position - player.transform.position).magnitude;
 
         if (dif <= 0)

@@ -36,7 +36,10 @@ public class CreateWorldWindow : EditorWindow
     string planetName = "";
     Rect r = Rect.zero;
 
-    [MenuItem("Window/World Generator")]
+    bool useCurve;
+    public AnimationCurve curve;
+
+    [MenuItem("Window/World Generator/CompleteWG")]
     public static void ShowWindow()
     {
         GetWindow<CreateWorldWindow>("World Generator");
@@ -53,7 +56,7 @@ public class CreateWorldWindow : EditorWindow
         maxChunkPerFace = 2;
         chunkDetail = 1;
         radius = 1;
-        
+        curve = new AnimationCurve();
     }
 
     private void OnGUI()
@@ -96,7 +99,7 @@ public class CreateWorldWindow : EditorWindow
                 TerrainManager t = g.GetComponent<TerrainManager>();
                 t.planetData = new TerrainInfo(radius, minChunkPerFace, maxChunkPerFace, chunkDetail, maxHeight, isMarchingCube, 
                     settings, humidityCount, humidityMove, temperatureGrad, humidityGrad, biomeQuantity, instantiateTrees,
-                    chooseBiomes, biomeList.ToArray());
+                    chooseBiomes, biomeList.ToArray(), useCurve, curve);
                 t.SetValues(p);
                 g.AddComponent<PlanetaryBody>();
             }
@@ -221,6 +224,12 @@ public class CreateWorldWindow : EditorWindow
 
         SetLabel("Instantiate Trees");
         instantiateTrees = EditorGUI.Toggle(r, instantiateTrees);
+
+        SetLabel("Use Temperature Curve");
+        useCurve = EditorGUI.Toggle(r, useCurve);
+        if(useCurve)
+            curve = EditorGUILayout.CurveField(curve);
+
         temperatureGrad = EditorGUILayout.GradientField(new GUIContent("Temperature Gradient"), temperatureGrad);
         humidityGrad = EditorGUILayout.GradientField(new GUIContent("Humidity Gradient"), humidityGrad);
         EditorGUI.indentLevel--;

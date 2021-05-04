@@ -583,15 +583,9 @@ MonoBehaviour:
   hoverSpeed:
     x: 30
     y: 540
-  forwardAcceleration:
-    x: 0.8
-    y: 0.8
-  strafeAcceleration:
-    x: 0.8
-    y: 0.8
-  hoverAcceleration:
-    x: 0.8
-    y: 0.8
+  forwardAcceleration: 0.8
+  strafeAcceleration: 0.8
+  hoverAcceleration: 0.8
   camSensitivity: 100
   movementRadius: 100
   landingDistance: 50

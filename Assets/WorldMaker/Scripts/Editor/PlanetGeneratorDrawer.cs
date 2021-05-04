@@ -10,7 +10,7 @@ public class PlanetGeneratorDrawer : PropertyDrawer
 
     public bool general, noise, minSet, maxSet, climate;
 
-    SerializedProperty[] t = new SerializedProperty[14];
+    SerializedProperty[] t = new SerializedProperty[18];
 
     void SetSerializedProperty(SerializedProperty property)
     {
@@ -28,8 +28,10 @@ public class PlanetGeneratorDrawer : PropertyDrawer
         t[11] = property.FindPropertyRelative("humidityCount");
         t[12] = property.FindPropertyRelative("minHumidityMove");
         t[13] = property.FindPropertyRelative("maxHumidityMove");
-        //t[14] = property.FindPropertyRelative("biomeTexture");
-        //t[15] = property.FindPropertyRelative("useColors");
+        t[14] = property.FindPropertyRelative("customTemperatures");
+        t[15] = property.FindPropertyRelative("temperatureCurves");
+        t[16] = property.FindPropertyRelative("randomRotation");
+        t[17] = property.FindPropertyRelative("rotationValues");
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -70,12 +72,12 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             EditorGUI.LabelField(r, new GUIContent("Max"));
             r.x += 30;
             t[3].intValue = EditorGUI.IntField(r, t[3].intValue);
+            r.x = r.x + r.width + 10;
+            r.width = 16;
             if (!CheckDetail(t[2].intValue, t[3].intValue))
-            {
-                r.x = r.x + r.width + 10;
-                r.width = 16;
                 EditorGUI.DrawRect(r, Color.red);
-            }
+            else
+                EditorGUI.DrawRect(r, Color.green);
 
             SetLabel("Chunk Detail");
             t[4].intValue = EditorGUI.IntField(r, t[4].intValue);
@@ -99,6 +101,14 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             r.x += r.width;
             if (GUI.Button(r, new GUIContent("Change")))
                 t[7].boolValue = !t[7].boolValue;
+
+            SetLabel("Apply random rotation");
+            t[16].boolValue = EditorGUI.Toggle(r, t[16].boolValue);
+            if (t[16].boolValue)
+            {
+                EditorGUILayout.PropertyField(t[17]);
+            }
+
             EditorGUI.indentLevel--;
         }
     }
@@ -154,6 +164,21 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             EditorGUI.LabelField(r, new GUIContent("Max"));
             r.x += 30;
             t[13].floatValue = EditorGUI.FloatField(r, t[13].floatValue);
+
+            SetLabel("Use Custom Temperatures");
+            t[14].boolValue = EditorGUI.Toggle(r, t[14].boolValue);
+            if (t[14].boolValue)
+            {
+                SetLabel("Size");
+                int arS = t[15].arraySize;
+                arS = EditorGUI.IntField(r, arS);
+                if (arS <= 0)
+                    arS = 1;
+                t[15].arraySize = arS;
+                for(int i = 0; i < t[15].arraySize; i++)
+                    EditorGUILayout.PropertyField(t[15].GetArrayElementAtIndex(i));
+            }
+
             EditorGUI.indentLevel--;
         }
     }
