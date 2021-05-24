@@ -47,7 +47,7 @@ public class SimpleCreateWorld : EditorWindow
     void TopBar()
     {
         r = EditorGUILayout.GetControlRect(false, 18);
-        EditorGUI.LabelField(r, "Name");
+        EditorGUI.LabelField(r, new GUIContent("Name", "Nombre del planeta a generar, se puede dejar vacío"));
         r.x += 50;
         r.width = (r.width / 2) - 60;
         planetName = EditorGUI.TextField(r, planetName);
@@ -70,17 +70,18 @@ public class SimpleCreateWorld : EditorWindow
             t.planetData = new TerrainInfo(radius, isMarchingCube, minChunkPerFace, maxChunkPerFace, chunkDetail, humidityMove, biomeQuantity);
             t.SetValues(p);
             g.AddComponent<PlanetaryBody>();
+            g.transform.position = new Vector3(0, 0, radius * 2);
         }
     }
 
     void General()
     {
-        EditorGUILayout.LabelField("General");
+        EditorGUILayout.LabelField("General", "Elementos base del planeta");
         EditorGUI.indentLevel++;
-        SetLabel("Radius");
+        SetLabel("Radius", "Distancia del centro al punto donde el terreno pasa de ser mar a tierra");
         radius = EditorGUI.Slider(r, radius, 5, 6000);
 
-        SetLabel("Mesh Algorithm: ");
+        SetLabel("Mesh Algorithm: ", "Algoritmo de modelado del planeta");
         r.width = r.width / 2;
         if (isMarchingCube)
             EditorGUI.LabelField(r, new GUIContent("Marching Cubes"));
@@ -89,24 +90,24 @@ public class SimpleCreateWorld : EditorWindow
         r.x += r.width;
         if (GUI.Button(r, new GUIContent("Change")))
             isMarchingCube = !isMarchingCube;
+
         EditorGUILayout.LabelField("Chunk");
         EditorGUI.indentLevel++;
-
         SetLabel("Chunk Per Face");
         r.width = (r.width / 2) - 20;
         EditorGUI.LabelField(r, new GUIContent("Min"));
         r.x += 30;
-        minChunkPerFace = EditorGUI.IntField(r, minChunkPerFace);
+        minChunkPerFace = EditorGUI.IntSlider(r, minChunkPerFace, 2, 5);
         r.x = r.x + r.width - 20;
         EditorGUI.LabelField(r, new GUIContent("Max"));
         r.x += 40;
         EditorGUI.LabelField(r, maxChunkPerFace.ToString());
 
-        SetLabel("Levels of Detail");
+        SetLabel("Levels of Detail", "Cantidad de niveles de detalle");
         lodCount = EditorGUI.IntSlider(r, lodCount, 1, 6);
         SetChunksPerFace();
 
-        SetLabel("Chunk Detail");
+        SetLabel("Chunk Detail", "Subdivisiones del chunk");
         chunkDetail = EditorGUI.IntSlider(r, chunkDetail, 10, 35);
         EditorGUI.indentLevel--;
         EditorGUI.indentLevel--;
@@ -114,11 +115,11 @@ public class SimpleCreateWorld : EditorWindow
 
     void Climate()
     {
-        EditorGUILayout.LabelField("Climate");
+        EditorGUILayout.LabelField("Climate", "Determina la distribución de biomas en el planeta");
         EditorGUI.indentLevel++;
-        SetLabel("Humidity Move");
+        SetLabel("Humidity Move", "Distancia que recorre la humedad antes de desaparecer, el valor representa radios");
         humidityMove = EditorGUI.Slider(r, humidityMove, .3f, 1.0f);
-        biomeQuantity = EditorGUILayout.IntSlider(new GUIContent("Number of biomes"), biomeQuantity, 1, 9);
+        biomeQuantity = EditorGUILayout.IntSlider(new GUIContent("Number of biomes", "Cantidad de biomas en el planeta"), biomeQuantity, 1, 9);
         EditorGUI.indentLevel--;
     }
 
@@ -133,6 +134,14 @@ public class SimpleCreateWorld : EditorWindow
     {
         r = EditorGUILayout.GetControlRect(true, 18);
         r = EditorGUI.PrefixLabel(r, new GUIContent(name));
+        r.x -= 15;
+        r.width += 15;
+    }
+
+    void SetLabel(string name, string tooltip)
+    {
+        r = EditorGUILayout.GetControlRect(true, 18);
+        r = EditorGUI.PrefixLabel(r, new GUIContent(name, tooltip));
         r.x -= 15;
         r.width += 15;
     }

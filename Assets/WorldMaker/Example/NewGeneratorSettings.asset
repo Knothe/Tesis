@@ -40,6 +40,11 @@ MonoBehaviour:
     minHumidityMove: 0
     maxHumidityMove: 0
     customTemperatures: 0
-    temperatureCurves: []
-    randomRotation: 0
+    temperatureCurves:
+    - serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 0
+      m_PostInfinity: 0
+      m_RotationOrder: 0
+    randomRotation: 1
     rotationValues: {x: 0, y: 0, z: 0}

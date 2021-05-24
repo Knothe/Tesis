@@ -12,7 +12,7 @@ public class PlanetManagerEditor : Editor
     SerializedProperty[] t = new SerializedProperty[27];
     SerializedProperty[] treeSet = new SerializedProperty[7];
 
-    bool generate, created, orbits, flora, general, tSD, biomeTree;
+    bool generate, created, orbits, flora, general, tSD, biomeTree, ground;
 
     public override void OnInspectorGUI()
     {
@@ -32,13 +32,20 @@ public class PlanetManagerEditor : Editor
         if (general)
         {
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(t[0]);
-            EditorGUILayout.PropertyField(t[20]);
-            EditorGUILayout.PropertyField(t[21]);
-            EditorGUILayout.PropertyField(t[17]);
-            EditorGUILayout.PropertyField(t[18]);
-            EditorGUILayout.PropertyField(t[24]);
-            EditorGUILayout.PropertyField(t[25]);
+            EditorGUILayout.PropertyField(t[0], new GUIContent("Player", "Referencia al Player Manager"));
+            EditorGUILayout.PropertyField(t[20], new GUIContent("Biome Color", "Scriptable Object del tipo Biome Color Wrapper\n" +
+                "Configura los colores para todos los planetas manejados"));
+            EditorGUILayout.PropertyField(t[21], new GUIContent("Material", "Material del terreno de los planetas"));
+            ground = EditorGUILayout.Foldout(ground, "Ground Settings");
+            if (ground)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(t[17], new GUIContent("Layer", "Layer que se le asignará a todo el terreno generado"));
+                EditorGUILayout.PropertyField(t[18], new GUIContent("Tag", "Tag que se le asignará a todo el terreno generado"));
+                EditorGUI.indentLevel--;
+            }
+            EditorGUILayout.PropertyField(t[24], new GUIContent("Atmosphere Settings", "Scriptable Object del tipo Atmosphere Settings para la atmósfera de los planetas generados"));
+            EditorGUILayout.PropertyField(t[25], new GUIContent("Biome Map", "Textura con la configuración y distribución de los biomas"));
             EditorGUI.indentLevel--;
         }
     }
@@ -49,11 +56,11 @@ public class PlanetManagerEditor : Editor
         if (generate)
         {
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(t[1]);
+            EditorGUILayout.PropertyField(t[1], new GUIContent("Generate New Planets", "Generará planetas en ejecución"));
             if (t[1].boolValue)
             {
-                EditorGUILayout.PropertyField(t[4]);
-                SetLabel("New Planets");
+                EditorGUILayout.PropertyField(t[4], new GUIContent("Generator Settings", "Scriptable Object del tipo Generator Settings Wrapper"));
+                SetLabel("New Planets", "Cantidad de planetas a generar en un rango");
                 r.width = (r.width / 2) - 25;
                 EditorGUI.LabelField(r, new GUIContent("Min"));
                 r.x += 30;
@@ -64,7 +71,7 @@ public class PlanetManagerEditor : Editor
                 t[6].intValue = EditorGUI.IntField(r, t[6].intValue);
 
                 float width;
-                SetLabel("Biomes Per Planet");
+                SetLabel("Biomes Per Planet", "Cantidad de biomas por planeta en un rango");
                 width = r.width - 50;
                 r.width = 50;
                 EditorGUI.LabelField(r, new GUIContent("Min"));
@@ -80,7 +87,7 @@ public class PlanetManagerEditor : Editor
                 r.width = width;
                 r.x += 50;
                 t[8].intValue = EditorGUI.IntSlider(r, t[8].intValue, 1, 8);
-                EditorGUILayout.PropertyField(t[9]);
+                EditorGUILayout.PropertyField(t[9], new GUIContent("Use All Biomes", "Asegura que a lo largo de los planetas generados aparecerán todos los biomas"));
             }
             EditorGUI.indentLevel--;
         }
@@ -92,8 +99,8 @@ public class PlanetManagerEditor : Editor
         if (created)
         {
             EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(t[2]);
-            EditorGUILayout.PropertyField(t[19]);
+            EditorGUILayout.PropertyField(t[2], new GUIContent("Use Created Planets", "Si es falso, elimina los planetas en ejecución"));
+            EditorGUILayout.PropertyField(t[19], new GUIContent("Planets", "Todos los planetas en escena, si no son generados a través de una ventana tiene que colocarlos manualmente"));
             r = EditorGUILayout.GetControlRect(true, 18);
             if (GUI.Button(r, new GUIContent("Clean planet list")))
                 planetManager.CleanPlanetsList();
@@ -109,12 +116,13 @@ public class PlanetManagerEditor : Editor
             if (orbits)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(t[10]);
-                EditorGUILayout.PropertyField(t[11]);
-                EditorGUILayout.PropertyField(t[12]);
-                EditorGUILayout.PropertyField(t[13]);
-                EditorGUILayout.PropertyField(t[14]);
-                EditorGUILayout.PropertyField(t[15]);
+                EditorGUILayout.PropertyField(t[10], new GUIContent("Number of Orbtis", "Cantidad de órbitas para acomodar planetas"));
+                EditorGUILayout.PropertyField(t[11], new GUIContent("First Orbit Alone", "Verdadero si solo aparecerá un planeta en la primera órbita"));
+                EditorGUILayout.PropertyField(t[12], new GUIContent("First Orbit Distance", "Radio de la primera órbita, todas se posicionan en el origen"));
+                EditorGUILayout.PropertyField(t[13], new GUIContent("Distance Per Orbit", "Diferencia de radio entre una órbita y otra"));
+                EditorGUILayout.PropertyField(t[14], new GUIContent("Max Planets Per Orbit", "Cántidad máxima de planetas por órbita\n" +
+                    "En caso de que First Orbit Alone sea verdadero, no aplica para la primera órbita"));
+                EditorGUILayout.PropertyField(t[15], new GUIContent("Elevation Variant", "Variación de posición en el eje Y"));
                 EditorGUI.indentLevel--;
             }
         }
@@ -130,14 +138,14 @@ public class PlanetManagerEditor : Editor
             EditorGUILayout.PropertyField(t[16]);
             if (t[16].boolValue)
             {
-                EditorGUILayout.PropertyField(t[22]);
-                SetLabel("Use Scriptable Tree Set");
+                EditorGUILayout.PropertyField(t[22], new GUIContent("Plant Size Alteration", "Alteración de la escala de los árboles generados"));
+                SetLabel("Use Biome Tree Collection", "Usa un Scriptable Object del tipo Biome Tree Collection o configura todos los elementos aquí");
                 t[3].boolValue = EditorGUI.Toggle(r, t[3].boolValue);
                 if(!t[3].boolValue)
                     TreeSetDraw();
                 else
                 {
-                    EditorGUILayout.PropertyField(t[26]);
+                    EditorGUILayout.PropertyField(t[26], new GUIContent("Tree Collection", "Scriptable Object del tipo Biome Tree Collection"));
                 }
             }
 
@@ -151,7 +159,7 @@ public class PlanetManagerEditor : Editor
         if (tSD)
         {
             EditorGUI.indentLevel++;
-            SetLabel("Scale");
+            SetLabel("Scale", "Escala de los planos de ruido");
             r.x -= 15;
             r.width = (r.width / 2) - 3;
             EditorGUI.LabelField(r, new GUIContent("1"));
@@ -162,10 +170,10 @@ public class PlanetManagerEditor : Editor
             r.x += 18;
             treeSet[2].floatValue = EditorGUI.FloatField(r, treeSet[2].floatValue);
 
-            EditorGUILayout.PropertyField(treeSet[1]);
-            EditorGUILayout.PropertyField(treeSet[3]);
-            EditorGUILayout.PropertyField(treeSet[4]);
-            EditorGUILayout.PropertyField(treeSet[5]);
+            EditorGUILayout.PropertyField(treeSet[1], new GUIContent("Offset 1", "Offset del plano 1"));
+            EditorGUILayout.PropertyField(treeSet[3], new GUIContent("Offset 2", "Offset del plano 2"));
+            EditorGUILayout.PropertyField(treeSet[4], new GUIContent("Max Trees Per Chunk", "Cantidad máxima de árboles en un solo chunk"));
+            EditorGUILayout.PropertyField(treeSet[5], new GUIContent("Missed Trees Max", "Cantidad de intentos para poner árboles, mientras mayor sea el número, más árboles se generarán"));
 
             if (treeSet[6].arraySize != 9)
                 treeSet[6].arraySize = 9;
@@ -185,6 +193,14 @@ public class PlanetManagerEditor : Editor
     {
         r = EditorGUILayout.GetControlRect(true, 18);
         r = EditorGUI.PrefixLabel(r, new GUIContent(name));
+        r.x -= 15;
+        r.width += 15;
+    }
+
+    void SetLabel(string name, string tooltip)
+    {
+        r = EditorGUILayout.GetControlRect(true, 18);
+        r = EditorGUI.PrefixLabel(r, new GUIContent(name, tooltip));
         r.x -= 15;
         r.width += 15;
     }

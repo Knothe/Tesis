@@ -14,8 +14,11 @@ public class CreateWorldWindow : EditorWindow
     int minChunkPerFace;
     int maxChunkPerFace;
     int chunkDetail;
+    int lodCount;
 
     // Noise
+    float noiseBase;
+    Vector2 noiseLimits = new Vector2();
     bool noiseList;
     int listSize = 3;
     List<NoiseSettings> settings;
@@ -73,7 +76,7 @@ public class CreateWorldWindow : EditorWindow
     void TopBar()
     {
         r = EditorGUILayout.GetControlRect(false, 18);
-        EditorGUI.LabelField(r, "Name");
+        EditorGUI.LabelField(r, new GUIContent("Name", "Nombre del planeta a generar, se puede dejar vacío"));
         r.x += 50;
         r.width = (r.width / 2) - 60;
         planetName = EditorGUI.TextField(r, planetName);
@@ -102,21 +105,22 @@ public class CreateWorldWindow : EditorWindow
                     chooseBiomes, biomeList.ToArray(), useCurve, curve);
                 t.SetValues(p);
                 g.AddComponent<PlanetaryBody>();
+                g.transform.position = new Vector3(0, 0, radius * 2);
             }
         }
     }
 
     void General()
     {
-        EditorGUILayout.LabelField("General");
+        EditorGUILayout.LabelField("General", "Elementos base del planeta");
         EditorGUI.indentLevel++;
-        SetLabel("Radius");
-        radius = EditorGUI.FloatField(r, radius);
+        SetLabel("Radius", "Distancia del centro al punto donde el terreno pasa de ser mar a tierra");
+        radius = EditorGUI.Slider(r, radius, 5, 6000);
 
-        SetLabel("Height");
-        maxHeight = EditorGUI.IntField(r, maxHeight);
+        SetLabel("Height", "Altura y profundidad máxima del terreno");
+        maxHeight = EditorGUI.IntSlider(r, maxHeight, (int)(radius/7), (int)(radius/4.5f));
 
-        SetLabel("Mesh Algorithm: ");
+        SetLabel("Mesh Algorithm: ", "Algoritmo de modelado del planeta");
         r.width = r.width / 2;
         if (isMarchingCube)
             EditorGUI.LabelField(r, new GUIContent("Marching Cubes"));
@@ -125,29 +129,34 @@ public class CreateWorldWindow : EditorWindow
         r.x += r.width;
         if (GUI.Button(r, new GUIContent("Change")))
             isMarchingCube = !isMarchingCube;
+
         EditorGUILayout.LabelField("Chunk");
         EditorGUI.indentLevel++;
         SetLabel("Chunk Per Face");
         r.width = (r.width / 2) - 20;
         EditorGUI.LabelField(r, new GUIContent("Min"));
         r.x += 30;
-        minChunkPerFace = EditorGUI.IntField(r, minChunkPerFace);
+        minChunkPerFace = EditorGUI.IntSlider(r, minChunkPerFace, 2, 5);
         r.x = r.x + r.width - 20;
         EditorGUI.LabelField(r, new GUIContent("Max"));
-        r.x += 30;
-        maxChunkPerFace = EditorGUI.IntField(r, maxChunkPerFace);
+        r.x += 40;
+        EditorGUI.LabelField(r, maxChunkPerFace.ToString());
 
-        SetLabel("Chunk Detail");
-        chunkDetail = EditorGUI.IntField(r, chunkDetail);
+        SetLabel("Levels of Detail", "Cantidad de niveles de detalle");
+        lodCount = EditorGUI.IntSlider(r, lodCount, 1, 6);
+        SetChunksPerFace();
+
+        SetLabel("Chunk Detail", "Subdivisiones del chunk");
+        chunkDetail = EditorGUI.IntSlider(r, chunkDetail, 10, 35);
         EditorGUI.indentLevel--;
         EditorGUI.indentLevel--;
     }
 
     void Noise()
     {
-        EditorGUILayout.LabelField("Noise");
+        EditorGUILayout.LabelField("Noise", "Determinan la forma y distribución del terreno");
         EditorGUI.indentLevel++;
-        noiseList = EditorGUILayout.Foldout(noiseList, "Noise List");
+        noiseList = EditorGUILayout.Foldout(noiseList, new GUIContent("Noise List", "Layers de ruido"));
         if (noiseList)
         {
             EditorGUI.indentLevel++;
@@ -164,25 +173,14 @@ public class CreateWorldWindow : EditorWindow
                 settingsOpen.RemoveAt(settings.Count - 1);
             }
 
-            for (int i = 0; i < listSize; i++)
-            {
-                settingsOpen[i] = EditorGUILayout.Foldout(settingsOpen[i], "Layer " + i);
-                if (settingsOpen[i])
-                {
-                    EditorGUI.indentLevel++;
-                    settings[i].strength = EditorGUILayout.FloatField("Strength", settings[i].strength);
-                    settings[i].scale = EditorGUILayout.FloatField("Scale", settings[i].scale);
-                    SetLabel("Offset");
-                    if (GUI.Button(r, new GUIContent("Randomize")))
-                    {
-                        settings[i].centre.x = UnityEngine.Random.Range(-1000.0f, 1000.0f);
-                        settings[i].centre.y = UnityEngine.Random.Range(-1000.0f, 1000.0f);
-                        settings[i].centre.z = UnityEngine.Random.Range(-1000.0f, 1000.0f);
-                    }
-                    settings[i].centre = EditorGUILayout.Vector3Field("", settings[i].centre);
-                    EditorGUI.indentLevel--;
-                }
-            }
+            noiseBase = 1.28f / radius;
+            NoiseLayer(0, noiseBase - (noiseBase * .5f), noiseBase + (noiseBase * .5f));
+
+            noiseBase = (1.28f / radius) * 2;
+            noiseLimits.x = noiseBase - (noiseBase * .5f);
+            noiseLimits.y = noiseBase + (noiseBase * .5f);
+            for (int i = 1; i < listSize; i++)
+                NoiseLayer(i, noiseLimits.x, noiseLimits.y);
 
             EditorGUI.indentLevel--;
         }
@@ -190,17 +188,46 @@ public class CreateWorldWindow : EditorWindow
         EditorGUI.indentLevel--;
     }
 
+    void NoiseLayer(int i, float min, float max)
+    {
+        settingsOpen[i] = EditorGUILayout.Foldout(settingsOpen[i], "Layer " + i);
+        if (settingsOpen[i])
+        {
+            EditorGUI.indentLevel++;
+            SetLabel("Strength" ,"Impacto a la altura del terreno, el valor de cada layer afecta");
+
+            settings[i].strength = EditorGUI.FloatField(r, settings[i].strength);
+
+            SetLabel("Scale", "Escala de la función de ruido");
+            EditorGUI.LabelField(r, settings[i].scale.ToString());
+            r = EditorGUILayout.GetControlRect(true, 18);
+            r.width += 55;
+            settings[i].scale = EditorGUI.Slider(r, settings[i].scale, min, max);
+
+            SetLabel("Offset");
+            if (GUI.Button(r, new GUIContent("Randomize")))
+            {
+                settings[i].centre.x = UnityEngine.Random.Range(-1000.0f, 1000.0f);
+                settings[i].centre.y = UnityEngine.Random.Range(-1000.0f, 1000.0f);
+                settings[i].centre.z = UnityEngine.Random.Range(-1000.0f, 1000.0f);
+            }
+            settings[i].centre = EditorGUILayout.Vector3Field("", settings[i].centre);
+            EditorGUI.indentLevel--;
+        }
+    }
+
     void Climate()
     {
-        EditorGUILayout.LabelField("Climate");
+        EditorGUILayout.LabelField("Climate", "Determina la distribución de biomas en el planeta");
         EditorGUI.indentLevel++;
-        SetLabel("Definition");
-        humidityCount = EditorGUI.IntField(r, humidityCount);
+        SetLabel("Definition", "Precisión de la humedad, mientras mayor sea el valor, mayor precisión hay");
+        humidityCount = EditorGUI.IntSlider(r, humidityCount, 15, 50);
 
-        SetLabel("Humidity Move");
-        humidityMove = EditorGUI.FloatField(r, humidityMove);
-        biomeQuantity = EditorGUILayout.IntSlider(new GUIContent("Number of biomes"), biomeQuantity, 1, 9);
-        SetLabel("Choose Biomes");
+        SetLabel("Humidity Move", "Distancia que recorre la humedad antes de desaparecer, el valor representa radios");
+        humidityMove = EditorGUI.Slider(r, humidityMove, .3f, 1);
+
+        biomeQuantity = EditorGUILayout.IntSlider(new GUIContent("Number of biomes", "Cantidad de biomas en el planeta"), biomeQuantity, 1, 9);
+        SetLabel("Choose Biomes", "Elige los biomas que quieres que aparezcan en el planeta");
         chooseBiomes = EditorGUI.Toggle(r, chooseBiomes);
         if (chooseBiomes)
         {
@@ -216,8 +243,11 @@ public class CreateWorldWindow : EditorWindow
                 while(biomeList.Count > biomeQuantity)
                     biomeList.RemoveAt(biomeList.Count - 1);
 
+                EditorGUI.indentLevel++;
                 for (int i = 0; i < biomeList.Count; i++)
-                    biomeList[i] = EditorGUILayout.IntSlider(new GUIContent("Biome " + i), biomeList[i], 0, 8);
+                    biomeList[i] = EditorGUILayout.IntPopup(biomeList[i], TerrainInfoData.biomeN, 
+                        new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8});
+                EditorGUI.indentLevel--;
                 EditorGUI.indentLevel--;
             }
         }
@@ -225,13 +255,15 @@ public class CreateWorldWindow : EditorWindow
         SetLabel("Instantiate Trees");
         instantiateTrees = EditorGUI.Toggle(r, instantiateTrees);
 
-        SetLabel("Use Temperature Curve");
+        SetLabel("Use Temperature Curve", "Curva que define la temperatura del planeta \n" +
+            "Eje x: Latitud del planeta donde 0 es el centro y 1 son los límites del planeta\n" +
+            "Eje y: Temperatura donde el 0 es la mayor temperatura posible y 1 es la menor");
         useCurve = EditorGUI.Toggle(r, useCurve);
         if(useCurve)
             curve = EditorGUILayout.CurveField(curve);
 
-        temperatureGrad = EditorGUILayout.GradientField(new GUIContent("Temperature Gradient"), temperatureGrad);
-        humidityGrad = EditorGUILayout.GradientField(new GUIContent("Humidity Gradient"), humidityGrad);
+        temperatureGrad = EditorGUILayout.GradientField(new GUIContent("Temperature Gradient", "Colores para mostrar la temperatura en el debug"), temperatureGrad);
+        humidityGrad = EditorGUILayout.GradientField(new GUIContent("Humidity Gradient", "Colores para mostrar la humedad en el debug"), humidityGrad);
         EditorGUI.indentLevel--;
     }
 
@@ -250,10 +282,25 @@ public class CreateWorldWindow : EditorWindow
         return maxCPF == minCPF;
     }
 
+    void SetChunksPerFace()
+    {
+        maxChunkPerFace = minChunkPerFace;
+        for (int i = 1; i < lodCount; i++)
+            maxChunkPerFace *= 2;
+    }
+
     void SetLabel(string name)
     {
         r = EditorGUILayout.GetControlRect(true, 18);
         r = EditorGUI.PrefixLabel(r, new GUIContent(name));
+        r.x -= 15;
+        r.width += 15;
+    }
+
+    void SetLabel(string name, string tooltip)
+    {
+        r = EditorGUILayout.GetControlRect(true, 18);
+        r = EditorGUI.PrefixLabel(r, new GUIContent(name, tooltip));
         r.x -= 15;
         r.width += 15;
     }

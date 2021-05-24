@@ -15,7 +15,6 @@ public class BiomeColorWrapperEditor : Editor
 public class BiomeColorDrawer : PropertyDrawer
 {
     SerializedProperty biomeList;
-    bool[] foldouts = new bool[10];
     Rect r = Rect.zero;
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)

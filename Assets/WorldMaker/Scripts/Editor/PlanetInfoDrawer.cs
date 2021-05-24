@@ -8,7 +8,7 @@ using UnityEditor;
 public class PlanetInfoDrawer : PropertyDrawer
 {
     Rect r = Rect.zero;
-    bool general, noise, climate, debug, chunk;
+    bool general, noise, climate, debug, chunk, biomeList;
     bool[] layers = new bool[1];
     SerializedProperty[] t = new SerializedProperty[24];
 
@@ -46,7 +46,6 @@ public class PlanetInfoDrawer : PropertyDrawer
         EditorGUI.BeginProperty(position, label, property);
         SetSerializedProperty(property);
         EditorGUI.indentLevel = 0;
-        EditorGUILayout.LabelField("Planet Data");
         General();
         Noise();
         Climate();
@@ -61,13 +60,13 @@ public class PlanetInfoDrawer : PropertyDrawer
         if (general)
         {
             EditorGUI.indentLevel++;
-            SetLabel("Radius");
+            SetLabel("Radius", "Distancia del centro al punto donde el terreno pasa de ser mar a tierra");
             t[0].floatValue = EditorGUI.FloatField(r, t[0].floatValue);
 
-            SetLabel("Height");
+            SetLabel("Height", "Altura y profundidad máxima del terreno");
             t[1].intValue = EditorGUI.IntField(r, t[1].intValue);
 
-            SetLabel("Mesh Algorithm: ");
+            SetLabel("Mesh Algorithm: ", "Algoritmo de modelado del planeta");
             r.width = r.width / 2;
             if (t[2].boolValue)
                 EditorGUI.LabelField(r, new GUIContent("Marching Cubes"));
@@ -78,7 +77,8 @@ public class PlanetInfoDrawer : PropertyDrawer
                 t[2].boolValue = !t[2].boolValue;
 
             r = EditorGUILayout.GetControlRect(true, 16);
-            EditorGUI.ObjectField(r, t[3]);
+            EditorGUI.ObjectField(r, t[3], new GUIContent("Player", "Player Manager del jugador"));
+
             chunk = EditorGUILayout.Foldout(chunk, "Chunk");
             if (chunk)
             {
@@ -92,11 +92,11 @@ public class PlanetInfoDrawer : PropertyDrawer
                 EditorGUI.LabelField(r, new GUIContent("Max"));
                 r.x += 30;
                 t[5].intValue = EditorGUI.IntField(r, t[5].intValue);
-                SetLabel("Chunk Detail");
+                SetLabel("Chunk Detail", "Subdivisiones del chunk");
                 t[6].intValue = EditorGUI.IntField(r, t[6].intValue);
                 EditorGUI.indentLevel--;
             }
-            SetLabel("Use Own Colors");
+            SetLabel("Use Own Colors", "Este planeta usará una configuración de colores distinta a la del Planets Manager");
             t[20].boolValue = EditorGUI.Toggle(r, t[20].boolValue);
             if (t[20].boolValue)
             {
@@ -112,7 +112,7 @@ public class PlanetInfoDrawer : PropertyDrawer
         if (noise)
         {
             EditorGUI.indentLevel++;
-            SetLabel("Layers");
+            SetLabel("Layers", "Cantidad de capas de ruido, mínimo 3");
             if (t[8].arraySize < 3)
                 t[8].arraySize = 3;
             int quantity = EditorGUI.IntField(r, t[8].arraySize);
@@ -137,8 +137,8 @@ public class PlanetInfoDrawer : PropertyDrawer
                     temp[3] = temp[2].FindPropertyRelative("x");
                     temp[4] = temp[2].FindPropertyRelative("y");
                     temp[5] = temp[2].FindPropertyRelative("z");
-                    EditorGUILayout.PropertyField(temp[0]);
-                    EditorGUILayout.PropertyField(temp[1]);
+                    EditorGUILayout.PropertyField(temp[0], new GUIContent("Strength", "Impacto a la altura del terreno, el valor de cada layer afecta"));
+                    EditorGUILayout.PropertyField(temp[1], new GUIContent("Scale", "Escala de la función de ruido"));
                     Vector3 vTemp = new Vector3(temp[3].floatValue, temp[4].floatValue, temp[5].floatValue);
                     SetLabel("Offset");
                     if(GUI.Button(r, new GUIContent("Randomize")))
@@ -164,21 +164,23 @@ public class PlanetInfoDrawer : PropertyDrawer
         if (climate)
         {
             EditorGUI.indentLevel++;
-            SetLabel("Definition");
+            SetLabel("Definition", "Precisión de la humedad, mientras mayor sea el valor, mayor precisión hay");
             t[9].intValue = EditorGUI.IntField(r, t[9].intValue);
 
-            SetLabel("Humidity Move");
+            SetLabel("Humidity Move", "Distancia que recorre la humedad antes de desaparecer, el valor representa radios");
             t[10].floatValue = EditorGUI.FloatField(r, t[10].floatValue);
-            t[14].intValue = EditorGUILayout.IntSlider(new GUIContent("Number of biomes"), t[14].intValue, 1, 9);
+            t[14].intValue = EditorGUILayout.IntSlider(new GUIContent("Number of biomes", "Cantidad de biomas en el planeta"), t[14].intValue, 1, 9);
 
-            t[7].boolValue = EditorGUILayout.Toggle(new GUIContent("Choose Biomes"), t[7].boolValue);
+            t[7].boolValue = EditorGUILayout.Toggle(new GUIContent("Choose Biomes", "Elige los biomas que quieres que aparezcan en el planeta"), t[7].boolValue);
             if (t[7].boolValue)
             {
                 DrawBiomeChoose();
             }
             t[19].boolValue = EditorGUILayout.Toggle(new GUIContent("Instantiate Trees"), t[19].boolValue);
 
-            t[23].boolValue = EditorGUILayout.Toggle(new GUIContent("Use Temperature Curve"), t[23].boolValue);
+            t[23].boolValue = EditorGUILayout.Toggle(new GUIContent("Use Temperature Curve", "Curva que define la temperatura del planeta \n" +
+                "Eje x: Latitud del planeta donde 0 es el centro y 1 son los límites del planeta\n" +
+                "Eje y: Temperatura donde el 0 es la mayor temperatura posible y 1 es la menor"), t[23].boolValue);
             if(t[23].boolValue)
                 t[22].animationCurveValue = EditorGUILayout.CurveField(t[22].animationCurveValue);
 
@@ -192,7 +194,7 @@ public class PlanetInfoDrawer : PropertyDrawer
         if (debug)
         {
             EditorGUI.indentLevel++;
-            SetLabel("Shape: ");
+            SetLabel("Shape: ", "Forma del planeta, cubo no es funcional");
             r.width = r.width / 2;
             if (t[15].boolValue)
                 EditorGUI.LabelField(r, new GUIContent("Sphere"));
@@ -202,7 +204,9 @@ public class PlanetInfoDrawer : PropertyDrawer
             if (GUI.Button(r, new GUIContent("Change")))
                 t[15].boolValue = !t[15].boolValue;
 
-            SetLabel("Planet Visible: ");
+            SetLabel("Planet Visible: ", "Elementos Generados del planeta\n" +
+                "All: Genera todos los chunks del planeta\n" +
+                "Only Visible: Genera nada más los que el jugador puede ver");
             r.width = r.width / 2;
             if (t[16].boolValue)
                 EditorGUI.LabelField(r, new GUIContent("All"));
@@ -212,11 +216,11 @@ public class PlanetInfoDrawer : PropertyDrawer
             if (GUI.Button(r, new GUIContent("Change")))
                 t[16].boolValue = !t[16].boolValue;
 
-            SetLabel("Show Biome: ");
+            SetLabel("Show Biome: ", "Colorea el planeta con los biomas");
             t[18].boolValue = EditorGUI.Toggle(r, t[18].boolValue);
             if (!t[18].boolValue)
             {
-                SetLabel("Show Data: ");
+                SetLabel("Show Data: ", "Representa ciertos datos del planeta de forma individual");
                 r.width = r.width / 2;
                 if (t[17].boolValue)
                     EditorGUI.LabelField(r, new GUIContent("Temperature"));
@@ -237,20 +241,32 @@ public class PlanetInfoDrawer : PropertyDrawer
 
     void DrawBiomeChoose()
     {
-        EditorGUI.indentLevel++;
-        t[13].arraySize = t[14].intValue;
-        for (int i = 0; i < t[13].arraySize; i++)
+        biomeList = EditorGUILayout.Foldout(biomeList, "Biome List");
+        if (biomeList)
         {
-            SetLabel("Biome " + i);
-            t[13].GetArrayElementAtIndex(i).intValue = EditorGUI.IntSlider(r, t[13].GetArrayElementAtIndex(i).intValue, 0, 8);
+            EditorGUI.indentLevel++;
+            t[13].arraySize = t[14].intValue;
+            for (int i = 0; i < t[13].arraySize; i++)
+            {
+                t[13].GetArrayElementAtIndex(i).intValue = EditorGUILayout.IntPopup(t[13].GetArrayElementAtIndex(i).intValue,
+                    TerrainInfoData.biomeN, new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 });
+            }
+            EditorGUI.indentLevel--;
         }
-        EditorGUI.indentLevel--;
     }
 
     void SetLabel(string name)
     {
         r = EditorGUILayout.GetControlRect(true, 16);
         r = EditorGUI.PrefixLabel(r, new GUIContent(name));
+        r.x -= 15;
+        r.width += 15;
+    }
+
+    void SetLabel(string name, string tooltip)
+    {
+        r = EditorGUILayout.GetControlRect(true, 16);
+        r = EditorGUI.PrefixLabel(r, new GUIContent(name, tooltip));
         r.x -= 15;
         r.width += 15;
     }

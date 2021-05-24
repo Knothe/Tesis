@@ -48,7 +48,7 @@ public class TreeCollectionDrawer : PropertyDrawer
 
     void DefaultValues()
     {
-        SetLabel("Scale");
+        SetLabel("Scale", "Escala de los planos de ruido");
         r.x += 15;
         r.width = (r.width / 2) - 27;
         EditorGUI.LabelField(r, new GUIContent("1"));
@@ -59,15 +59,15 @@ public class TreeCollectionDrawer : PropertyDrawer
         r.x += 18;
         treeSet[2].floatValue = EditorGUI.FloatField(r, treeSet[2].floatValue);
 
-        EditorGUILayout.PropertyField(treeSet[1]);
-        EditorGUILayout.PropertyField(treeSet[3]);
+        EditorGUILayout.PropertyField(treeSet[1], new GUIContent("Offset 1", "Offset del plano 1"));
+        EditorGUILayout.PropertyField(treeSet[3], new GUIContent("Offset 2", "Offset del plano 2"));
         if(GUILayout.Button(new GUIContent("Randomize offsets")))
         {
             treeSet[1].vector3Value = new Vector3( Random.Range(-100.0f, 100.0f), Random.Range(-100.0f, 100.0f), Random.Range(-100.0f, 100.0f));
             treeSet[3].vector3Value = new Vector3( Random.Range(-100.0f, 100.0f), Random.Range(-100.0f, 100.0f), Random.Range(-100.0f, 100.0f));
         }
-        EditorGUILayout.PropertyField(treeSet[4]);
-        EditorGUILayout.PropertyField(treeSet[5]);
+        EditorGUILayout.PropertyField(treeSet[4], new GUIContent("Max Trees Per Chunk", "Cantidad máxima de árboles en un solo chunk"));
+        EditorGUILayout.PropertyField(treeSet[5], new GUIContent("Missed Trees Max", "Cantidad de intentos para poner árboles, mientras mayor sea el número, más árboles se generarán"));
     }
 
     void DrawScriptable()
@@ -121,6 +121,14 @@ public class TreeCollectionDrawer : PropertyDrawer
     {
         r = EditorGUILayout.GetControlRect(true, 18);
         r = EditorGUI.PrefixLabel(r, new GUIContent(name));
+        r.x -= 15;
+        r.width += 15;
+    }
+
+    void SetLabel(string name, string tooltip)
+    {
+        r = EditorGUILayout.GetControlRect(true, 18);
+        r = EditorGUI.PrefixLabel(r, new GUIContent(name, tooltip));
         r.x -= 15;
         r.width += 15;
     }

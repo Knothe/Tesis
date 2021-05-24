@@ -1029,8 +1029,6 @@ public static class TerrainInfoData
         }
     };
 
-
-
     public static string[] biomeName =
     {
         "Tropical Rainforest",          //Selva Tropical
@@ -1043,5 +1041,18 @@ public static class TerrainInfoData
         "Tundra",                       //Tundra
         "Desert",                       //Desierto
         "Sea"                           //Mar"
+    };
+
+    public static string[] biomeN =
+    {
+        "Tropical Rainforest",          //Selva Tropical
+        "Tropical Seasonal Forest",     //Bosque Tropical
+        "Savannah",                     //Sabana
+        "Temperate Rainforest",         //Selva Templada
+        "Temperate Forest",             //Bosque Templado
+        "Grassland",                    //Herbazal
+        "Boreal Forest",                //Taiga
+        "Tundra",                       //Tundra
+        "Desert"                        //Desierto
     };
 }

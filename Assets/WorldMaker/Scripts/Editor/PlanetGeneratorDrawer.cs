@@ -11,6 +11,9 @@ public class PlanetGeneratorDrawer : PropertyDrawer
     public bool general, noise, minSet, maxSet, climate;
 
     SerializedProperty[] t = new SerializedProperty[18];
+    SerializedProperty[] _t = new SerializedProperty[2];
+    List<bool> settings1 = new List<bool>();
+    List<bool> settings2 = new List<bool>();
 
     void SetSerializedProperty(SerializedProperty property)
     {
@@ -53,7 +56,7 @@ public class PlanetGeneratorDrawer : PropertyDrawer
         {
             EditorGUI.indentLevel++;
 
-            SetLabel("Radius");
+            SetLabel("Radius", "Rango de radios posibles para los planetas generados");
             r.width = (r.width / 2) - 25;
             EditorGUI.LabelField(r, new GUIContent("Min"));
             r.x += 30;
@@ -79,10 +82,10 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             else
                 EditorGUI.DrawRect(r, Color.green);
 
-            SetLabel("Chunk Detail");
+            SetLabel("Chunk Detail", "Subdivisiones del chunk");
             t[4].intValue = EditorGUI.IntField(r, t[4].intValue);
 
-            SetLabel("Max Height");
+            SetLabel("Height", "Rango de altura y profundidad máxima del terreno");
             r.width = (r.width / 2) - 25;
             EditorGUI.LabelField(r, new GUIContent("Min"));
             r.x += 30;
@@ -92,7 +95,7 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             r.x += 30;
             t[6].intValue = EditorGUI.IntField(r, t[6].intValue);
 
-            SetLabel("Mesh Algorithm: ");
+            SetLabel("Mesh Algorithm: ", "Algoritmo de modelado del planeta");
             r.width = r.width / 2;
             if (t[7].boolValue)
                 EditorGUI.LabelField(r, new GUIContent("Marching Cubes"));
@@ -102,11 +105,11 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             if (GUI.Button(r, new GUIContent("Change")))
                 t[7].boolValue = !t[7].boolValue;
 
-            SetLabel("Apply random rotation");
+            SetLabel("Apply random rotation", "Aplicar rotación a los planetas generados");
             t[16].boolValue = EditorGUI.Toggle(r, t[16].boolValue);
             if (t[16].boolValue)
             {
-                EditorGUILayout.PropertyField(t[17]);
+                EditorGUILayout.PropertyField(t[17], new GUIContent("Rotation Values", "Ángulo Euler de rotación aplicado a los planetas generados"));
             }
 
             EditorGUI.indentLevel--;
@@ -121,24 +124,65 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             EditorGUI.indentLevel++;
             if (t[8].intValue < 3)
                 t[8].intValue = 3;
-            SetLabel("Settings Length");
+            SetLabel("Settings Length", "Cantidad de layers");
             t[8].intValue = EditorGUI.IntField(r, t[8].intValue);
             t[9].arraySize = t[8].intValue;
             t[10].arraySize = t[8].intValue;
-            minSet = EditorGUILayout.Foldout(minSet, "Min");
+
+            if (settings1.Count < t[8].intValue)
+                while (settings1.Count != t[8].intValue)
+                    settings1.Add(false);
+            else if (settings1.Count > t[8].intValue)
+                while (settings1.Count != t[8].intValue)
+                    settings1.RemoveAt(settings1.Count - 1);
+
+            if (settings2.Count < t[8].intValue)
+                while (settings2.Count != t[8].intValue)
+                    settings2.Add(false);
+            else if (settings2.Count > t[8].intValue)
+                while (settings2.Count != t[8].intValue)
+                    settings2.RemoveAt(settings2.Count - 1);
+
+            minSet = EditorGUILayout.Foldout(minSet, new GUIContent("Min", "Valores mínimos de ruido"));
             if (minSet)
             {
                 EditorGUI.indentLevel++;
                 for (int i = 0; i < t[8].intValue; i++)
-                    EditorGUILayout.PropertyField(t[9].GetArrayElementAtIndex(i));
+                {
+                    settings1[i] = EditorGUILayout.Foldout(settings1[i], "Layer " + i);
+                    if (settings1[i])
+                    {
+                        EditorGUI.indentLevel++;
+                        _t[0] = t[9].GetArrayElementAtIndex(i).FindPropertyRelative("strength");
+                        _t[1] = t[9].GetArrayElementAtIndex(i).FindPropertyRelative("scale");
+                        SetLabel("Strength", "Impacto a la altura del terreno, el valor de cada layer afecta");
+                        _t[0].floatValue = EditorGUI.FloatField(r, _t[0].floatValue);
+                        SetLabel("Scale", "Escala de la función de ruido");
+                        _t[1].floatValue = EditorGUI.FloatField(r, _t[1].floatValue);
+                        EditorGUI.indentLevel--;
+                    }
+                }
                 EditorGUI.indentLevel--;
             }
-            maxSet = EditorGUILayout.Foldout(maxSet, "Max");
+            maxSet = EditorGUILayout.Foldout(maxSet, new GUIContent("Max", "Valores máximos de ruido"));
             if (maxSet)
             {
                 EditorGUI.indentLevel++;
                 for (int i = 0; i < t[8].intValue; i++)
-                    EditorGUILayout.PropertyField(t[10].GetArrayElementAtIndex(i));
+                {
+                    settings2[i] = EditorGUILayout.Foldout(settings2[i], "Layer " + i);
+                    if (settings2[i])
+                    {
+                        EditorGUI.indentLevel++;
+                        _t[0] = t[10].GetArrayElementAtIndex(i).FindPropertyRelative("strength");
+                        _t[1] = t[10].GetArrayElementAtIndex(i).FindPropertyRelative("scale");
+                        SetLabel("Strength", "Impacto a la altura del terreno, el valor de cada layer afecta");
+                        _t[0].floatValue = EditorGUI.FloatField(r, _t[0].floatValue);
+                        SetLabel("Scale", "Escala de la función de ruido");
+                        _t[1].floatValue = EditorGUI.FloatField(r, _t[1].floatValue);
+                        EditorGUI.indentLevel--;
+                    }
+                }
                 EditorGUI.indentLevel--;
             }
             EditorGUI.indentLevel--;
@@ -152,10 +196,10 @@ public class PlanetGeneratorDrawer : PropertyDrawer
         {
             EditorGUI.indentLevel++;
 
-            SetLabel("Humidity Count");
+            SetLabel("Definition", "Precisión de la humedad, mientras mayor sea el valor, mayor precisión hay");
             t[11].intValue = EditorGUI.IntField(r, t[11].intValue);
 
-            SetLabel("Humidity Move");
+            SetLabel("Humidity Move", "Rango de distancias que recorre la humedad antes de desaparecer, el valor representa radios");
             r.width = (r.width / 2) - 25;
             EditorGUI.LabelField(r, new GUIContent("Min"));
             r.x += 30;
@@ -165,7 +209,9 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             r.x += 30;
             t[13].floatValue = EditorGUI.FloatField(r, t[13].floatValue);
 
-            SetLabel("Use Custom Temperatures");
+            SetLabel("Use Custom Temperatures", "Usará una lista de curvas de temperatura para representar la temperatura\n" +
+                "Eje x: Latitud del planeta donde 0 es el centro y 1 son los límites del planeta\n" +
+                "Eje y: Temperatura donde el 0 es la mayor temperatura posible y 1 es la menor");
             t[14].boolValue = EditorGUI.Toggle(r, t[14].boolValue);
             if (t[14].boolValue)
             {
@@ -175,10 +221,11 @@ public class PlanetGeneratorDrawer : PropertyDrawer
                 if (arS <= 0)
                     arS = 1;
                 t[15].arraySize = arS;
+                EditorGUI.indentLevel++;
                 for(int i = 0; i < t[15].arraySize; i++)
                     EditorGUILayout.PropertyField(t[15].GetArrayElementAtIndex(i));
+                EditorGUI.indentLevel--;
             }
-
             EditorGUI.indentLevel--;
         }
     }
@@ -187,6 +234,14 @@ public class PlanetGeneratorDrawer : PropertyDrawer
     {
         r = EditorGUILayout.GetControlRect(true, 16);
         r = EditorGUI.PrefixLabel(r, new GUIContent(name));
+        r.x -= 15;
+        r.width += 15;
+    }
+
+    void SetLabel(string name, string tooltip)
+    {
+        r = EditorGUILayout.GetControlRect(true, 16);
+        r = EditorGUI.PrefixLabel(r, new GUIContent(name, tooltip));
         r.x -= 15;
         r.width += 15;
     }

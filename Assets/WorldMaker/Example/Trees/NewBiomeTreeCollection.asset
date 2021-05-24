@@ -92,44 +92,62 @@ MonoBehaviour:
         radius: 25
       typesOfTrees: 2
     - trees:
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 15
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 15
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 15
+      - treePrefabs:
+        - {fileID: 7964353755117723700, guid: e24b28445a6eb0f489790f33b684829d, type: 3}
+        radius: 15
       typesOfTrees: 1
     - trees:
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
+      - treePrefabs:
+        - {fileID: 1795133294259667069, guid: 3ad1fd6fd59c00e429ebf391fa9179f2, type: 3}
+        radius: 15
+      - treePrefabs:
+        - {fileID: 3348548695700771898, guid: 06ba8032086a5e6498c26641567a5a5e, type: 3}
+        - {fileID: 3643501458007415804, guid: f141eed0a1510944292967a77651b11a, type: 3}
+        radius: 10
+      - treePrefabs:
+        - {fileID: 1795133294259667069, guid: 3ad1fd6fd59c00e429ebf391fa9179f2, type: 3}
+        radius: 15
+      - treePrefabs:
+        - {fileID: 3348548695700771898, guid: 06ba8032086a5e6498c26641567a5a5e, type: 3}
+        - {fileID: 3643501458007415804, guid: f141eed0a1510944292967a77651b11a, type: 3}
+        radius: 10
+      typesOfTrees: 2
+    - trees:
+      - treePrefabs:
+        - {fileID: 2488057293935595198, guid: 082891d11c44add4993c3a89f0aa1091, type: 3}
+        radius: 5
+      - treePrefabs:
+        - {fileID: 2488057293935595198, guid: 082891d11c44add4993c3a89f0aa1091, type: 3}
+        radius: 5
+      - treePrefabs:
+        - {fileID: 2488057293935595198, guid: 082891d11c44add4993c3a89f0aa1091, type: 3}
+        radius: 5
+      - treePrefabs:
+        - {fileID: 2488057293935595198, guid: 082891d11c44add4993c3a89f0aa1091, type: 3}
+        radius: 5
       typesOfTrees: 1
     - trees:
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      typesOfTrees: 1
-    - trees:
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
-      - treePrefabs: []
-        radius: 0
+      - treePrefabs:
+        - {fileID: 3643501458007415804, guid: f141eed0a1510944292967a77651b11a, type: 3}
+        radius: 7
+      - treePrefabs:
+        - {fileID: 3643501458007415804, guid: f141eed0a1510944292967a77651b11a, type: 3}
+        radius: 7
+      - treePrefabs:
+        - {fileID: 3643501458007415804, guid: f141eed0a1510944292967a77651b11a, type: 3}
+        radius: 7
+      - treePrefabs:
+        - {fileID: 3643501458007415804, guid: f141eed0a1510944292967a77651b11a, type: 3}
+        radius: 7
       typesOfTrees: 1
     - trees:
       - treePrefabs:
