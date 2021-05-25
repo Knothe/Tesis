@@ -213,6 +213,7 @@ public class TerrainManager : MonoBehaviour
                 Chunk c = planetManager.GetChunk();
                 c.gameObject.transform.parent = f.parent;
                 c.Initialize(n, planetManager.planetMaterial);
+                c.GetComponent<Renderer>().material.SetColor("_Color", Color.white);
                 n.inGameChunk = c;
             }
         }
@@ -282,6 +283,8 @@ public class TerrainManager : MonoBehaviour
     /// <param name="n">Node to remove</param>
     void RemoveFromDetailLimit(Node n)
     {
+        if(n.inGameChunk != null)
+            n.inGameChunk.GetComponent<Renderer>().material.SetColor("_Color", Color.white);
         int4 id = n.GetIDValue();
         if (detailLimitNode.ContainsKey(id))
             detailLimitNode.Remove(id);
@@ -295,7 +298,6 @@ public class TerrainManager : MonoBehaviour
     /// <param name="n">Node to add</param>
     void AddToBiggestDetail(Node n)
     {
-        
         if (n.level == planetData.levelsOfDetail - 1)
             if (n.inGameChunk != null)
             {
@@ -311,6 +313,8 @@ public class TerrainManager : MonoBehaviour
     /// <param name="n">Node to add</param>
     void AddToDetailLimit(Node n)
     {
+        if(n.inGameChunk != null)
+            n.inGameChunk.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
         int4 id = n.GetIDValue();
         if (!detailLimitNode.ContainsKey(id))
             detailLimitNode.Add(id, n);

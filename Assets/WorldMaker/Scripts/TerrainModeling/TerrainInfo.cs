@@ -463,6 +463,8 @@ public class TerrainInfo
         return value;
     }
 
+
+
     public Color GetPointColor(int i)
     {
         if (i != 9)
@@ -471,6 +473,15 @@ public class TerrainInfo
         BiomeColors b = biomeColors;
         float v = UnityEngine.Random.Range(0.0f, 1.0f);
         return b.biomeList[i].Evaluate(v);
+    }
+
+    public Color GetPointColor(int f, float height, float yPos, Vector3 p) {
+        float t = GetT(height, yPos);
+        if (t == -1)
+            return Color.blue; // Only top biomes have contact with water
+        float h = GetH(f, p);
+        Color c = GetBiomeTexture().GetPixel((int)(GetBiomeTexture().width * t), (int)(GetBiomeTexture().height * h));
+        return c;
     }
 
     public int GetBiomeNumber(int f, float height, float yPos, Vector3 p)
