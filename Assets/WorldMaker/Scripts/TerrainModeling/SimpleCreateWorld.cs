@@ -67,7 +67,7 @@ public class SimpleCreateWorld : EditorWindow
             else
                 g = new GameObject(planetName, typeof(TerrainManager));
             TerrainManager t = g.GetComponent<TerrainManager>();
-            t.planetData = new TerrainInfo(radius, isMarchingCube, minChunkPerFace, maxChunkPerFace, chunkDetail, humidityMove, biomeQuantity);
+            t.planetData = new TerrainInfo(radius, isMarchingCube, minChunkPerFace, maxChunkPerFace, lodCount, chunkDetail, humidityMove, biomeQuantity);
             t.SetValues(p);
             g.AddComponent<PlanetaryBody>();
             g.transform.position = new Vector3(0, 0, radius * 2);
@@ -97,7 +97,9 @@ public class SimpleCreateWorld : EditorWindow
         r.width = (r.width / 2) - 20;
         EditorGUI.LabelField(r, new GUIContent("Min"));
         r.x += 30;
-        minChunkPerFace = EditorGUI.IntSlider(r, minChunkPerFace, 2, 5);
+        minChunkPerFace = EditorGUI.IntField(r, minChunkPerFace);
+        if (minChunkPerFace < 2)
+            minChunkPerFace = 2;
         r.x = r.x + r.width - 20;
         EditorGUI.LabelField(r, new GUIContent("Max"));
         r.x += 40;

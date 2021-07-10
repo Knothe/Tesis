@@ -10,7 +10,7 @@ public class PlanetGeneratorDrawer : PropertyDrawer
 
     public bool general, noise, minSet, maxSet, climate;
 
-    SerializedProperty[] t = new SerializedProperty[18];
+    SerializedProperty[] t = new SerializedProperty[19];
     SerializedProperty[] _t = new SerializedProperty[2];
     List<bool> settings1 = new List<bool>();
     List<bool> settings2 = new List<bool>();
@@ -35,6 +35,7 @@ public class PlanetGeneratorDrawer : PropertyDrawer
         t[15] = property.FindPropertyRelative("temperatureCurves");
         t[16] = property.FindPropertyRelative("randomRotation");
         t[17] = property.FindPropertyRelative("rotationValues");
+        t[18] = property.FindPropertyRelative("levelOfDetail");
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -52,8 +53,7 @@ public class PlanetGeneratorDrawer : PropertyDrawer
     void General()
     {
         general = EditorGUILayout.Foldout(general, "General");
-        if (general)
-        {
+        if (general) {
             EditorGUI.indentLevel++;
 
             SetLabel("Radius", "Rango de radios posibles para los planetas generados");
@@ -67,20 +67,20 @@ public class PlanetGeneratorDrawer : PropertyDrawer
             t[1].floatValue = EditorGUI.FloatField(r, t[1].floatValue);
 
             SetLabel("ChunkPerFace");
-            r.width = (r.width / 2) - 40;
+            r.width = (r.width / 2) - 25;
             EditorGUI.LabelField(r, new GUIContent("Min"));
             r.x += 30;
             t[2].intValue = EditorGUI.IntField(r, t[2].intValue);
-            r.x = r.x + r.width - 9;
+            r.x = r.x + r.width - 10;
             EditorGUI.LabelField(r, new GUIContent("Max"));
             r.x += 30;
-            t[3].intValue = EditorGUI.IntField(r, t[3].intValue);
-            r.x = r.x + r.width + 10;
-            r.width = 16;
-            if (!CheckDetail(t[2].intValue, t[3].intValue))
-                EditorGUI.DrawRect(r, Color.red);
-            else
-                EditorGUI.DrawRect(r, Color.green);
+            EditorGUI.LabelField(r, t[3].intValue.ToString());
+
+            SetLabel("Levels of Detail", "Cantidad de niveles de detalle");
+            t[18].intValue = EditorGUI.IntField(r, t[18].intValue);
+            if (t[18].intValue < 1)
+                t[18].intValue = 1;
+            SetChunksPerFace();
 
             SetLabel("Chunk Detail", "Subdivisiones del chunk");
             t[4].intValue = EditorGUI.IntField(r, t[4].intValue);
@@ -114,6 +114,13 @@ public class PlanetGeneratorDrawer : PropertyDrawer
 
             EditorGUI.indentLevel--;
         }
+    }
+
+    void SetChunksPerFace() {
+        int max = t[2].intValue;
+        for (int i = 1; i < t[2].intValue; i++)
+            max *= 2;
+        t[3].intValue = max;
     }
 
     void Noise()
@@ -244,17 +251,6 @@ public class PlanetGeneratorDrawer : PropertyDrawer
         r = EditorGUI.PrefixLabel(r, new GUIContent(name, tooltip));
         r.x -= 15;
         r.width += 15;
-    }
-
-    bool CheckDetail(int min, int max)
-    {
-        if (min <= 0 || max <= 0)
-            return false;
-        float minCPF = min;
-        float maxCPF = max;
-        while(maxCPF > minCPF)
-            maxCPF /= 2;
-        return maxCPF == minCPF;
     }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)

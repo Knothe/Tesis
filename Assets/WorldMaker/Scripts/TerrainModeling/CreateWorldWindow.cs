@@ -100,7 +100,7 @@ public class CreateWorldWindow : EditorWindow
                 else
                     g = new GameObject(planetName, typeof(TerrainManager));
                 TerrainManager t = g.GetComponent<TerrainManager>();
-                t.planetData = new TerrainInfo(radius, minChunkPerFace, maxChunkPerFace, chunkDetail, maxHeight, isMarchingCube, 
+                t.planetData = new TerrainInfo(radius, minChunkPerFace, maxChunkPerFace, lodCount, chunkDetail, maxHeight, isMarchingCube, 
                     settings, humidityCount, humidityMove, temperatureGrad, humidityGrad, biomeQuantity, instantiateTrees,
                     chooseBiomes, biomeList.ToArray(), useCurve, curve);
                 t.SetValues(p);
@@ -136,7 +136,9 @@ public class CreateWorldWindow : EditorWindow
         r.width = (r.width / 2) - 20;
         EditorGUI.LabelField(r, new GUIContent("Min"));
         r.x += 30;
-        minChunkPerFace = EditorGUI.IntSlider(r, minChunkPerFace, 2, 5);
+        minChunkPerFace = EditorGUI.IntField(r, minChunkPerFace);
+        if (minChunkPerFace < 2)
+            minChunkPerFace = 2;
         r.x = r.x + r.width - 20;
         EditorGUI.LabelField(r, new GUIContent("Max"));
         r.x += 40;

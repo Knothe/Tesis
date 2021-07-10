@@ -17,6 +17,7 @@ MonoBehaviour:
     maxPlanetRadius: 0
     minChunkPerFace: 0
     maxChunkPerFace: 0
+    levelOfDetail: 1
     chunkDetail: 0
     minMaxHeight: 0
     maxMaxHeight: 0

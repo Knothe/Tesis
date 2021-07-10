@@ -10,7 +10,7 @@ public class PlanetInfoDrawer : PropertyDrawer
     Rect r = Rect.zero;
     bool general, noise, climate, debug, chunk, biomeList;
     bool[] layers = new bool[1];
-    SerializedProperty[] t = new SerializedProperty[24];
+    SerializedProperty[] t = new SerializedProperty[25];
 
     void SetSerializedProperty(SerializedProperty property)
     {
@@ -38,7 +38,7 @@ public class PlanetInfoDrawer : PropertyDrawer
         t[21] = property.FindPropertyRelative("biomeColorWrapper");
         t[22] = property.FindPropertyRelative("curve");
         t[23] = property.FindPropertyRelative("useCurve");
-
+        t[24] = property.FindPropertyRelative("levelsOfDetail");
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -88,10 +88,19 @@ public class PlanetInfoDrawer : PropertyDrawer
                 EditorGUI.LabelField(r, new GUIContent("Min"));
                 r.x += 30;
                 t[4].intValue = EditorGUI.IntField(r, t[4].intValue);
+                if (t[4].intValue < 1)
+                    t[4].intValue = 1;
                 r.x = r.x + r.width - 20;
                 EditorGUI.LabelField(r, new GUIContent("Max"));
                 r.x += 30;
-                t[5].intValue = EditorGUI.IntField(r, t[5].intValue);
+                EditorGUI.LabelField(r, t[5].intValue.ToString());
+                //t[5].intValue = EditorGUI.IntField(r, t[5].intValue);
+                SetLabel("Levels of Detail", "Cantidad de niveles de detalle");
+                t[24].intValue = EditorGUI.IntField(r, t[24].intValue);
+                if (t[24].intValue < 1)
+                    t[24].intValue = 1;
+                SetChunksPerFace();
+
                 SetLabel("Chunk Detail", "Subdivisiones del chunk");
                 t[6].intValue = EditorGUI.IntField(r, t[6].intValue);
                 EditorGUI.indentLevel--;
@@ -104,6 +113,13 @@ public class PlanetInfoDrawer : PropertyDrawer
             }
             EditorGUI.indentLevel--;
         }
+    }
+
+    void SetChunksPerFace() {
+        int max = t[4].intValue;
+        for (int i = 1; i < t[24].intValue; i++)
+            max *= 2;
+        t[5].intValue = max;
     }
 
     void Noise()

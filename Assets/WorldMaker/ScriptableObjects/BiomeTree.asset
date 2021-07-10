@@ -22,3 +22,4 @@ MonoBehaviour:
       radius: 0
     - treePrefabs: []
       radius: 0
+    typesOfTrees: 1

@@ -10,7 +10,8 @@ public class PlanetGeneratorSettings
     public float maxPlanetRadius;                               
 
     public int minChunkPerFace;                             
-    public int maxChunkPerFace;                             
+    public int maxChunkPerFace;
+    public int levelOfDetail;
     public int chunkDetail;                                 
 
     // Max Height

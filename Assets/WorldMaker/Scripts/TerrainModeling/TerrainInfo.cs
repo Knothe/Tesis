@@ -46,7 +46,7 @@ public class TerrainInfo
             return biomeColorWrapper.biomeColors;
         } }
 
-    public int levelsOfDetail { get; private set; }
+    public int levelsOfDetail;
     public List<int> reescaleValues { get; private set; }
     public float3[] resolutionVectors { get; private set; }
     public float3[] humidityResVec { get; private set; }
@@ -88,12 +88,13 @@ public class TerrainInfo
         instantiateTrees = tree;
     }
 
-    public TerrainInfo(float r, int minCPF, int maxCPF, int cD, int maxH, bool algorithm, List<NoiseSettings> s, 
+    public TerrainInfo(float r, int minCPF, int maxCPF, int loD, int cD, int maxH, bool algorithm, List<NoiseSettings> s, 
         int hCount, float hMove, Gradient tG, Gradient hG, int bQ, bool iT, bool cB, int[] menuBN, bool uC, AnimationCurve c)
     {
         planetRadius = r;
         minChunkPerFace = minCPF;
         maxChunkPerFace = maxCPF;
+        levelsOfDetail = loD;
         chunkDetail = cD;
         maxHeight = maxH;
         isMarchingCube = algorithm;
@@ -113,12 +114,14 @@ public class TerrainInfo
         curve = c;
     }
 
-    public TerrainInfo(float r, bool algorithm, int minCPF, int maxCPF, int cD, float hMove, int bQ)
+    public TerrainInfo(float r, bool algorithm, int minCPF, int maxCPF, int loD, int cD, float hMove, int bQ)
     {
         planetRadius = r;
         isMarchingCube = algorithm;
         minChunkPerFace = minCPF;
         maxChunkPerFace = maxCPF;
+        levelsOfDetail = loD;
+        Debug.Log(minChunkPerFace + ", " + maxChunkPerFace + ", " + levelsOfDetail);
         chunkDetail = cD;
         humidityMove = hMove;
         biomeQuantity = bQ;
@@ -143,9 +146,6 @@ public class TerrainInfo
 
     public void OnValidate()
     {
-        if (!CheckChunks())
-            Debug.LogError("Chunks (" + minChunkPerFace + ", " + maxChunkPerFace + ") don't coincide");
-
         if (player == null)
             player = GameObject.FindObjectOfType<PlayerManager>().transform;
     }
@@ -164,7 +164,9 @@ public class TerrainInfo
     public void InitializeValues()
     {
         noise = new Noise(0);
+        Debug.Log(minChunkPerFace + ", " + maxChunkPerFace + ", " + levelsOfDetail);
         levelsOfDetail = GetDetailCount();
+        Debug.Log(minChunkPerFace + ", " + maxChunkPerFace + ", " + levelsOfDetail);
         if (levelsOfDetail == -1)
             Debug.LogError("Chunks don't coincide");
         SetResolutionValues();
