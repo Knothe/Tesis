@@ -1,0 +1,132 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 507b9cb364fbfab4cae9ddff4554036f, type: 3}
+  m_Name: ExampleSettings
+  m_EditorClassIdentifier: 
+  settings:
+    minPlanetRadius: 5000
+    maxPlanetRadius: 6000
+    minChunkPerFace: 2
+    maxChunkPerFace: 8
+    chunkDetail: 20
+    minMaxHeight: 700
+    maxMaxHeight: 1000
+    isMarchingCube: 1
+    settingsLength: 3
+    minSettings:
+    - strength: 1
+      scale: 0.00025
+    - strength: 1
+      scale: 0.001
+    - strength: 1
+      scale: 0.002
+    maxSettings:
+    - strength: 1
+      scale: 0.0005
+    - strength: 1
+      scale: 0.002
+    - strength: 1
+      scale: 0.003
+    humidityCount: 30
+    minHumidityMove: 0.5
+    maxHumidityMove: 0.2
+    customTemperatures: 1
+    temperatureCurves:
+    - serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 0
+    - serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 0
+    - serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.21274146
+        value: 0.38959363
+        inSlope: 0.14962396
+        outSlope: 0.14962396
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.6681703
+      - serializedVersion: 3
+        time: 0.6389695
+        value: 0.40828198
+        inSlope: -0.58860934
+        outSlope: -0.58860934
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.16686437
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 2
+        outSlope: 2
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 0
+    randomRotation: 1
+    rotationValues: {x: 100, y: 100, z: 100}

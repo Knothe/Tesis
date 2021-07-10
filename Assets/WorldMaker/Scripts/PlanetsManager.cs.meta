@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 66091ec8e9e6e434a90f8089cb651994
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - player: {instanceID: 0}
+  - settingsWrapper: {instanceID: 0}
+  - biomeColorWrapper: {instanceID: 0}
+  - planetMaterial: {fileID: 2100000, guid: acc38288256e7234886c3de7a31f8314, type: 2}
+  - atmosphere: {fileID: 11400000, guid: 0ac86be461b39594f8a324b2285809e4, type: 2}
+  - biomeTexture: {fileID: 2800000, guid: 716bba9db0a2db640bbd6e2fa51eaf69, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
